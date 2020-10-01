@@ -3,7 +3,7 @@ package rv32
 import Chisel._
 import chisel3._
 
-object opcode {
+object opcode_t {
   def LOAD      = UInt("b0000011", 7)
   def LOAD_FP   = UInt("b0000111", 7)
   def CUSTOM_0  = UInt("b0001011", 7)
@@ -31,7 +31,7 @@ object opcode {
   def CUSTOM_3  = UInt("b1111011", 7)
 }
 
-object funct3 {
+object funct3_t {
   def BEQ   = UInt("b000", 3)
   def LB    = UInt("b000", 3)
   def SB    = UInt("b000", 3)
@@ -167,6 +167,7 @@ object pc_t {
 object op1_t {
   def RS1 = UInt("h0", 1.W)
   def PC  = UInt("h1", 1.W)
+  def XX  = BitPat("b??")
 }
 
 object op2_t {
@@ -196,7 +197,7 @@ class CtrlT extends Bundle {
 
 class IdT extends Bundle {
   val pc = UInt(32.W)
-  val ir = UInt(32.W)
+  val ir = Inst
 }
 
 class ExT extends Bundle {

@@ -4,7 +4,7 @@ import Chisel._
 import chisel3._
 import chisel3.util._
 
-class Alu extends Module {
+class ALU extends Module {
   val io = IO(new Bundle {
     val fn = Input UInt(4.W)
     val op1 = Input UInt(32.W)
@@ -20,7 +20,7 @@ class Alu extends Module {
     is(fn_t.ADD) { io.out := io.op1 + io.op2 }
     is(fn_t.SUB) { io.out := io.op1 - io.op2 }
     is(fn_t.SLL) { io.out := io.op1 << shamt }
-    is(fn_t.SLT) { io.out := Cat(UInt(0, 31.W), (SInt(io.op1) < SInt(io.op2))) }
+    is(fn_t.SLT) { io.out := Cat(UInt(0, 31.W), (io.op1.asSInt < io.op2,asSInt)) }
     is(fn_t.SLTU){ io.out := Cat(UInt(0, 31.W), (io.op1 < io.op2)) }
     is(fn_t.XOR) { io.out := io.op1 ^ io.op2 }
     is(fn_t.SRL) { io.out := io.op1 >> shamt }
