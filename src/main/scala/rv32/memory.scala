@@ -12,6 +12,7 @@ class Memory extends Module {
   })
   val rd = Reg(UInt(5.W))
   val op = Reg(UInt(4.W))
+  val rdata = Wire(UInt(32.W))
   val wstrb = Wire(UInt(4.W))
   val wdata = Wire(UInt(32.W))
   val mm = Wire(new MmT)
@@ -75,9 +76,62 @@ class Memory extends Module {
 
   io.cache.ar.prot = 0.U(3.W)
   val arvalid = RegInit(false.B)
+  io.cache.ar.valid := arvalid
   when(read) { arvalid := true.B }
   .elsewhen(io.cache.ar.valid & io.cache.ar.ready) { arvalid := false.B }
 
+  val araddr = RegEnable(mm.data.alu, read & ~(io.cache.ar.valid & ~io.cache.ar.ready))
+  val op     = RegEnable(mm.ctrl.op,  read & ~(io.cache.ar.valid & ~io.cache.ar.ready)
+  val rd     = RegEnable(mm.data.rd,  read & ~(io.cache.ar.valid & ~io.cache.ar.ready)
+  io.cache.ar.addr := araddr
+
+  io.cache.r.ready := io.sink.t.ready
+
+  rdata := 0.U(32.W)
+  switch(op) {
+    is(op_t.LOAD_WORD) { rdata := io.cache.r.data }
+    is(op_t.LOAD_HALF) {
+      rdata := Mux(io.cache.ar.addr(1),
+        Cat(Fill(16, io.cache.r.data(31)), io.cache.r.data(31, 16)),
+        Cat(Fill(16, io.cache.r.data(15)), io.cache.r.data(15, 0)))
+    }
+    is(op_t.LOAD_HALF_UNSIGNED) {
+      rdata := Mux(io.cache.ar.addr(1),
+        Cat(0.U(16.W), io.cache.r.data(31, 16)),
+        Cat(0.U(16.W), io.cache.r.data(15, 0)))
+    }
+    is(op_t.LOAD_BYTE) {
+      switch(io.cache.ar.addr(1, 0)) {
+        is(0.U(2.W)) { rdata := Cat(Fill(24, io.cache.r.data(7)), io.cache.r.data(7, 0)) }
+        is(1.U(2.W)) { rdata := Cat(Fill(24, io.cache.r.data(15)), io.cache.r.data(15, 8)) }
+        is(2.U(2.W)) { rdata := Cat(Fill(24, io.cache.r.data(23)), io.cache.r.data(23, 16)) }
+        is(3.U(2.W)) { rdata := Cat(Fill(24, io.cache.r.data(31)), io.cache.r.data(31, 24)) }
+      }
+    }
+    is(op_t.LOAD_BYTE_UNSIGNED) {
+      switch(io.cache.ar.addr(1, 0)) {
+        is(0.U(2.W)) { rdata := Cat(0.U(24.W), io.cache.r.data(7, 0)) }
+        is(1.U(2.W)) { rdata := Cat(0.U(24.W), io.cache.r.data(15, 8)) }
+        is(2.U(2.W)) { rdata := Cat(0.U(24.W), io.cache.r.data(23, 16)) }
+        is(3.U(2.W)) { rdata := Cat(0.U(24.W), io.cache.r.data(31, 24)) }
+      }
+    }
+  }
+
+  io.source.t.ready := ~reading & ~writing & io.sink.t.ready
+  val tvalid = RegInit(false.B)
+  when (~read & ((io.source.t.valid & io.source.t.ready) | (io.cache.r.valid & io.cache.r.ready &io.cache.r.resp === 0.U(2.W)))) {
+    tvalid := true.B
+  }.elsewhen (io.sink.t.valid & io.sink.t.ready) {
+    tvalid := false.B
+  }
+  io.sink.t.valid := tvalid
+
+  when (io.sink.t.ready) {
+    wb.ctrl.op := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.resp == 0.U(2.W)), op, mm.ctrl.op)
+    wb.data.rd.data := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.resp == 0.U(2.W)), rdata, mm.data.alu)
+    wb.data.rd.addr := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.resp == 0.U(2.W)), rd, mm.data.rd)
+  }
 
 }
 
