@@ -1,42 +1,40 @@
 package rv32
 
-import Chisel._
 import chisel3._
 import chisel3.util._
 
 class Arbitrate extends Module {
   val io = IO{new Bundle {
-    val fault = Output Bool()
-    val cache = new Axi.flip()
+    val fault = Output(Bool())
+    val cache = Flipped(new Axi)
     val code  = new Axi
+    val data  = new Axi
     val mmio  = new Axi
   }}
-  def NONE = UInt("h0", 2.W)
-  def CODE = UInt("h1", 2.W)
-  def DATA = UInt("h2", 2.W)
-  def MMIO = UInt("h3", 2.W)
+  def NONE = 0.U(2.W)
+  def CODE = 1.U(2.W)
+  def DATA = 2.U(2.W)
+  def MMIO = 3.U(2.W)
 
   val read, write = UInt(2.W)
 
-  val wcode, wdata, wmmio = Wire(Bool)
-  wcode := cache.aw.addr >= rv32.CODE_BASE && cache.aw.addr < rv32.CODE_BASE + rv32.CODE_SIZE
-  wdata := cache.aw.addr >= rv32.DATA_BASE && cache.aw.addr < rv32.DATA_BASE + rv32.DATA_SIZE
-  wmmio := cache.aw.addr >= rv32.MMIO_BASE
+  val wcode = io.cache.aw.bits.addr >= rv32.CODE_BASE && io.cache.aw.bits.addr < rv32.CODE_BASE + rv32.CODE_SIZE
+  val wdata = io.cache.aw.bits.addr >= rv32.DATA_BASE && io.cache.aw.bits.addr < rv32.DATA_BASE + rv32.DATA_SIZE
+  val wmmio = io.cache.aw.bits.addr >= rv32.MMIO_BASE
 
   write := NONE
-  when (wcdoe)      { write := CODE }
-  elsewhen (wdata)  { write := DATA }
-  elsewhen (wmmio)  { write := MMIO }
+  when (wcode)      { write := CODE }
+  .elsewhen (wdata)  { write := DATA }
+  .elsewhen (wmmio)  { write := MMIO }
 
-  val rcode, rdata, rmmio = Wire(Bool)
-  rcode := cache.ar.addr >= rv32.CODE_BASE && cache.ar.addr < rv32.CODE_BASE + rv32.CODE_SIZE
-  rdata := cache.ar.addr >= rv32.DATA_BASE && cache.ar.addr < rv32.DATA_BASE + rv32.DATA_SIZE
-  rmmio := cache.ar.addr >= rv32.MMIO_BASE
+  val rcode = io.cache.ar.bits.addr >= rv32.CODE_BASE && io.cache.ar.bits.addr < rv32.CODE_BASE + rv32.CODE_SIZE
+  val rdata = io.cache.ar.bits.addr >= rv32.DATA_BASE && io.cache.ar.bits.addr < rv32.DATA_BASE + rv32.DATA_SIZE
+  val rmmio = io.cache.ar.bits.addr >= rv32.MMIO_BASE
 
   read := NONE
-  when (rcdoe)      { read := CODE }
-  elsewhen (rdata)  { read := DATA }
-  elsewhen (rmmio)  { read := MMIO }
+  when (rcode)      { read := CODE }
+  .elsewhen (rdata) { read := DATA }
+  .elsewhen (rmmio) { read := MMIO }
 
   // AW channel
   io.code.aw.bits := io.cache.aw.bits
@@ -63,10 +61,10 @@ class Arbitrate extends Module {
   io.cache.w.ready := wcode & io.code.w.ready | wdata & io.data.w.ready | wmmio & io.mmio.w.ready
 
   // B channel
-  io.cache.b.bits.resp := axi4.DECERR
-  when (wcdoe)      { io.cache.b.bits.resp := io.code.b.bits.resp }
-  elsewhen (wdata)  { io.cache.b.bits.resp := io.data.b.bits.resp }
-  elsewhen (wmmio)  { io.cache.b.bits.resp := io.mmio.b.bits.resp }
+  io.cache.b.bits.resp := Axi4.DECERR
+  when (wcode)      { io.cache.b.bits.resp := io.code.b.bits.resp }
+  .elsewhen (wdata)  { io.cache.b.bits.resp := io.data.b.bits.resp }
+  .elsewhen (wmmio)  { io.cache.b.bits.resp := io.mmio.b.bits.resp }
 
   io.cache.b.valid := wcode & io.code.b.valid | wdata & io.data.b.valid | wmmio & io.mmio.b.valid
   io.code.b.ready := wcode & io.cache.b.ready
@@ -86,17 +84,17 @@ class Arbitrate extends Module {
   io.cache.ar.ready := wcode & io.code.ar.ready | wdata & io.data.ar.ready | wmmio & io.mmio.ar.ready
 
   // R channel
-  io.cache.r.bits.resp := axi4.DECERR
+  io.cache.r.bits.resp := Axi4.DECERR
   io.cache.r.bits.data := 0.U
-  when (wcdoe)      { io.cache.r.bits := io.code.r.bits }
-  elsewhen (wdata)  { io.cache.r.bits := io.data.r.bits }
-  elsewhen (wmmio)  { io.cache.r.bits := io.mmio.r.bits }
+  when (wcode)      { io.cache.r.bits := io.code.r.bits }
+  .elsewhen (wdata)  { io.cache.r.bits := io.data.r.bits }
+  .elsewhen (wmmio)  { io.cache.r.bits := io.mmio.r.bits }
 
   io.cache.r.valid := wcode & io.code.r.valid | wdata & io.data.r.valid | wmmio & io.mmio.r.valid
   io.code.r.ready := wcode & io.cache.r.ready
   io.data.r.ready := wdata & io.cache.r.ready
   io.mmio.r.ready := wmmio & io.cache.r.ready
 
-  io.fault ;= io.cache.ar.valid & (read === NONE);
+  io.fault := io.cache.ar.valid & (read === NONE);
 }
 

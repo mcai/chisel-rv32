@@ -1,190 +1,192 @@
 package rv32
 
-import Chisel._
 import chisel3._
+import chisel3.util._
 
 object opcode_t {
-  def LOAD      = UInt("b0000011", 7)
-  def LOAD_FP   = UInt("b0000111", 7)
-  def CUSTOM_0  = UInt("b0001011", 7)
-  def MISC_MEM  = UInt("b0001111", 7)
-  def OP_IMM    = UInt("b0010011", 7)
-  def AUIPC     = UInt("b0010111", 7)
-  def OP_IMM_32 = UInt("b0011011", 7)
-  def STORE     = UInt("b0100011", 7)
-  def STORE_FP  = UInt("b0100111", 7)
-  def CUSTOM_1  = UInt("b0101011", 7)
-  def AMO       = UInt("b0101111", 7)
-  def OP        = UInt("b0110011", 7)
-  def LUI       = UInt("b0110111", 7)
-  def OP_32     = UInt("b0111011", 7)
-  def MADD      = UInt("b1000011", 7)
-  def MSUB      = UInt("b1000111", 7)
-  def NMSUB     = UInt("b1001011", 7)
-  def NMADD     = UInt("b1001111", 7)
-  def OP_FP     = UInt("b1010011", 7)
-  def CUSTOM_2  = UInt("b1011011", 7)
-  def BRANCH    = UInt("b1100011", 7)
-  def JALR      = UInt("b1100111", 7)
-  def JAL       = UInt("b1101111", 7)
-  def SYSTEM    = UInt("b1110011", 7)
-  def CUSTOM_3  = UInt("b1111011", 7)
+  def LOAD      = "b0000011".U(7.W)
+  def LOAD_FP   = "b0000111".U(7.W)
+  def CUSTOM_0  = "b0001011".U(7.W)
+  def MISC_MEM  = "b0001111".U(7.W)
+  def OP_IMM    = "b0010011".U(7.W)
+  def AUIPC     = "b0010111".U(7.W)
+  def OP_IMM_32 = "b0011011".U(7.W)
+  def STORE     = "b0100011".U(7.W)
+  def STORE_FP  = "b0100111".U(7.W)
+  def CUSTOM_1  = "b0101011".U(7.W)
+  def AMO       = "b0101111".U(7.W)
+  def OP        = "b0110011".U(7.W)
+  def LUI       = "b0110111".U(7.W)
+  def OP_32     = "b0111011".U(7.W)
+  def MADD      = "b1000011".U(7.W)
+  def MSUB      = "b1000111".U(7.W)
+  def NMSUB     = "b1001011".U(7.W)
+  def NMADD     = "b1001111".U(7.W)
+  def OP_FP     = "b1010011".U(7.W)
+  def CUSTOM_2  = "b1011011".U(7.W)
+  def BRANCH    = "b1100011".U(7.W)
+  def JALR      = "b1100111".U(7.W)
+  def JAL       = "b1101111".U(7.W)
+  def SYSTEM    = "b1110011".U(7.W)
+  def CUSTOM_3  = "b1111011".U(7.W)
 }
 
 object funct3_t {
-  def BEQ   = UInt("b000", 3)
-  def LB    = UInt("b000", 3)
-  def SB    = UInt("b000", 3)
-  def ADD   = UInt("b000", 3)
-  def SUB   = UInt("b000", 3)
-  def BNE   = UInt("b001", 3)
-  def LH    = UInt("b001", 3)
-  def SH    = UInt("b001", 3)
-  def SLL   = UInt("b001", 3)
-  def LW    = UInt("b010", 3)
-  def SW    = UInt("b010", 3)
-  def SLT   = UInt("b010", 3)
-  def SLTU  = UInt("b011", 3)
-  def SLTIU = UInt("b011", 3)
-  def BLT   = UInt("b100", 3)
-  def XOR   = UInt("b100", 3)
-  def LBU   = UInt("b100", 3)
-  def BGE   = UInt("b101", 3)
-  def LHU   = UInt("b101", 3)
-  def SRL   = UInt("b101", 3)
-  def SRA   = UInt("b101", 3)
-  def BLTU  = UInt("b110", 3)
-  def OR    = UInt("b110", 3)
-  def BGEU  = UInt("b111", 3)
-  def AND   = UInt("b111", 3)
+  def BEQ   = "b000".U(3.W)
+  def LB    = "b000".U(3.W)
+  def SB    = "b000".U(3.W)
+  def ADD   = "b000".U(3.W)
+  def SUB   = "b000".U(3.W)
+  def BNE   = "b001".U(3.W)
+  def LH    = "b001".U(3.W)
+  def SH    = "b001".U(3.W)
+  def SLL   = "b001".U(3.W)
+  def LW    = "b010".U(3.W)
+  def SW    = "b010".U(3.W)
+  def SLT   = "b010".U(3.W)
+  def SLTU  = "b011".U(3.W)
+  def SLTIU = "b011".U(3.W)
+  def BLT   = "b100".U(3.W)
+  def XOR   = "b100".U(3.W)
+  def LBU   = "b100".U(3.W)
+  def BGE   = "b101".U(3.W)
+  def LHU   = "b101".U(3.W)
+  def SRL   = "b101".U(3.W)
+  def SRA   = "b101".U(3.W)
+  def BLTU  = "b110".U(3.W)
+  def OR    = "b110".U(3.W)
+  def BGEU  = "b111".U(3.W)
+  def AND   = "b111".U(3.W)
 }
 
 object rv32 {
-  def RESET_ADDR= UInt("h00000000", 32)
-  def TRAP_ADDR = UInt("h00000004", 32)
-  def CODE_BASE = UInt("h00000400", 32)
-  def CODE_SIZE = UInt("h00000C00", 32)
-  def DATA_BASE = UInt("h00001000", 32)
-  def DATA_SIZE = UInt("h00001000", 32)
-  def MMIO_BASE = UInt("h00400000", 32)
+  def RESET_ADDR= "h00000000".U(32.W)
+  def TRAP_ADDR = "h00000004".U(32.W)
+  def CODE_BASE = "h00000400".U(32.W)
+  def CODE_SIZE = "h00000C00".U(32.W)
+  def DATA_BASE = "h00001000".U(32.W)
+  def DATA_SIZE = "h00001000".U(32.W)
+  def MMIO_BASE = "h00400000".U(32.W)
 }
 
-class Inst extends UInt(32.W) {
-  def r_funct7  = this(31, 25)
-  def r_rs2     = this(24, 20)
-  def r_rs1     = this(19, 15)
-  def r_funct3  = this(14, 12)
-  def r_rd      = this(11, 7)
-  def r_opcode  = this(6, 0)
+class Inst extends Bundle {
+  val inst = UInt(32.W)
 
-  def i_imm_11_0= this(31, 20)
-  def i_rs1     = this(19, 15)
-  def i_funct3  = this(14, 12)
-  def i_rd      = this(11, 7)
-  def i_opcode  = this(6, 0)
-  def i_imm     = Cat(Fill(this(31), 20), i_imm_11_0())
+  def r_funct7  = inst(31, 25)
+  def r_rs2     = inst(24, 20)
+  def r_rs1     = inst(19, 15)
+  def r_funct3  = inst(14, 12)
+  def r_rd      = inst(11, 7)
+  def r_opcode  = inst(6, 0)
 
-  def s_imm_11_5= this(31, 25)
-  def s_rs2     = this(24, 20)
-  def s_rs1     = this(19, 15)
-  def s_funct3  = this(14, 12)
-  def s_imm_4_0 = this(11, 7)
-  def s_opcode  = this(6, 0)
-  def s_imm     = Cat(Fill(this(31), 20), s_imm_11_5, s_imm_4_0)
+  def i_imm_11_0= inst(31, 20)
+  def i_rs1     = inst(19, 15)
+  def i_funct3  = inst(14, 12)
+  def i_rd      = inst(11, 7)
+  def i_opcode  = inst(6, 0)
+  def i_imm     = Cat(Fill(20, inst(31)), i_imm_11_0).asUInt
 
-  def b_imm_12  = this(31)
-  def b_imm_10_5= this(30, 25)
-  def b_rs2     = this(24, 20)
-  def b_rs1     = this(19, 15)
-  def b_funct3  = this(14, 12)
-  def b_imm_4_1 = this(11, 8)
-  def b_imm_11  = this(7)
-  def b_opcode  = this(6, 0)
-  def b_imm     = Cat(Fill(this(31), 20), b_imm_11, b_imm_10_5, b_imm_4_1, UInt("0", 1))
+  def s_imm_11_5= inst(31, 25)
+  def s_rs2     = inst(24, 20)
+  def s_rs1     = inst(19, 15)
+  def s_funct3  = inst(14, 12)
+  def s_imm_4_0 = inst(11, 7)
+  def s_opcode  = inst(6, 0)
+  def s_imm     = Cat(Fill(20, inst(31)), s_imm_11_5, s_imm_4_0).asUInt
 
-  def u_imm_31_12 = this(31, 12)
-  def u_imm_rd  = this(11, 7)
-  def u_opcode  = this(6, 8)
-  def u_imm     = Cat(u_imm_31_12, UInt("0", 12))
+  def b_imm_12  = inst(31)
+  def b_imm_10_5= inst(30, 25)
+  def b_rs2     = inst(24, 20)
+  def b_rs1     = inst(19, 15)
+  def b_funct3  = inst(14, 12)
+  def b_imm_4_1 = inst(11, 8)
+  def b_imm_11  = inst(7)
+  def b_opcode  = inst(6, 0)
+  def b_imm     = Cat(Fill(20, inst(31)), b_imm_11, b_imm_10_5, b_imm_4_1, 0.U(1.W)).asUInt
 
-  def j_imm_20  = this(31)
-  def j_imm_10_1= this(30, 21)
-  def j_imm_11  = this(20)
-  def j_imm_19_12 = this(19, 12)
-  def j_imm_rd  = this(11, 7)
-  def j_opcode  = this(6, 0)
-  def j_imm     = Cat(Fill(this(31), 12), j_imm_19_12, j_imm_11, j_imm_10_1, UInt("0", 1))
+  def u_imm_31_12 = inst(31, 12)
+  def u_imm_rd  = inst(11, 7)
+  def u_opcode  = inst(6, 8)
+  def u_imm     = Cat(u_imm_31_12, "0".U(12.W)).asUInt
+
+  def j_imm_20  = inst(31)
+  def j_imm_10_1= inst(30, 21)
+  def j_imm_11  = inst(20)
+  def j_imm_19_12 = inst(19, 12)
+  def j_imm_rd  = inst(11, 7)
+  def j_opcode  = inst(6, 0)
+  def j_imm     = Cat(Fill(12, inst(31)), j_imm_19_12, j_imm_11, j_imm_10_1, 0.U(1.W)).asUInt
 }
 
 object op_t {
-  def NONE                = UInt("h0", 4.W)
-  def INTEGER             = UInt("h1", 4.W)
-  def BRANCH              = UInt("h3", 4.W)
-  def JUMP                = UInt("h4", 4.W)
-  def LOAD_WORD           = UInt("h5", 4.W)
-  def LOAD_HALF           = UInt("h6", 4.W)
-  def LOAD_BYTE           = UInt("h7", 4.W)
-  def LOAD_HALF_UNSIGNED  = UInt("h8", 4.W)
-  def LOAD_BYTE_UNSIGNED  = UInt("h9", 4.W)
-  def STORE_WORD          = UInt("hA", 4.W)
-  def STORE_HALF          = UInt("hB", 4.W)
-  def STORE_BYTE          = UInt("hC", 4.W)
+  def NONE                = "h0".U(4.W)
+  def INTEGER             = "h1".U(4.W)
+  def BRANCH              = "h2".U(4.W)
+  def JUMP                = "h3".U(4.W)
+  def LOAD_WORD           = "h4".U(4.W)
+  def LOAD_HALF           = "h5".U(4.W)
+  def LOAD_BYTE           = "h6".U(4.W)
+  def LOAD_HALF_UNSIGNED  = "h7".U(4.W)
+  def LOAD_BYTE_UNSIGNED  = "h8".U(4.W)
+  def STORE_WORD          = "h9".U(4.W)
+  def STORE_HALF          = "hA".U(4.W)
+  def STORE_BYTE          = "hB".U(4.W)
 }
 
 object fn_t {
-  def ADD  = UInt("h0", 4.W)
-  def SLL  = UInt("h1", 4.W)
-  def SLT  = UInt("h2", 4.W)
-  def SLTU = UInt("h3", 4.W)
-  def XOR  = UInt("h4", 4.W)
-  def SRL  = UInt("h5", 4.W)
-  def OR   = UInt("h6", 4.W)
-  def AND  = UInt("h7", 4.W)
-  def SUB  = UInt("h8", 4.W)
-  def SRA  = UInt("h9", 4.W)
-  def OP2  = UInt("hA", 4.W)
-  def ANY  = BitPat("b????")
+  def ADD  = 0x0.U(4.W)
+  def SLL  = 0x1.U(4.W)
+  def SLT  = 0x2.U(4.W)
+  def SLTU = 0x3.U(4.W)
+  def XOR  = 0x4.U(4.W)
+  def SRL  = 0x5.U(4.W)
+  def OR   = 0x6.U(4.W)
+  def AND  = 0x7.U(4.W)
+  def SUB  = 0x8.U(4.W)
+  def SRA  = 0x9.U(4.W)
+  def OP2  = 0xA.U(4.W)
+  def ANY  = 0x0.U(4.W)
 }
 
 object br_t {
-  def JAL  = UInt("h0", 3.W)
-  def JALR = UInt("h1", 3.W)
-  def BEQ  = UInt("h2", 3.W)
-  def BNE  = UInt("h3", 3.W)
-  def BLT  = UInt("h4", 3.W)
-  def BLTU = UInt("h5", 3.W)
-  def BGE  = UInt("h6", 3.W)
-  def BGEU = UInt("h7", 3.W)
-  def NA   = BitPat("b???")
+  def JAL  = 0.U(3.W)
+  def JALR = 1.U(3.W)
+  def BEQ  = 2.U(3.W)
+  def BNE  = 3.U(3.W)
+  def BLT  = 4.U(3.W)
+  def BLTU = 5.U(3.W)
+  def BGE  = 6.U(3.W)
+  def BGEU = 7.U(3.W)
+  def NA   = 0.U(3.W)
 }
 
 object pc_t {
-  def NEXT = UInt("h0", 2.W)
-  def ADDR = UInt("h1", 2.W)
-  def TRAP = UInt("h2", 2.W)
+  def NEXT = "h0".U(2.W)
+  def ADDR = "h1".U(2.W)
+  def TRAP = "h2".U(2.W)
 }
 
 object op1_t {
-  def RS1 = UInt("h0", 1.W)
-  def PC  = UInt("h1", 1.W)
-  def XX  = BitPat("b??")
+  def RS1 = 0.U(1.W)
+  def PC  = 1.U(1.W)
+  def XX  = 0.U(1.W)
 }
 
 object op2_t {
-  def RS2   = UInt("h0", 3.W)
-  def I_IMM = UInt("h1", 3.W)
-  def S_IMM = UInt("h2", 3.W)
-  def B_IMM = UInt("h3", 3.W)
-  def U_IMM = UInt("h4", 3.W)
-  def J_IMM = UInt("h5", 3.W)
-  def XXX = BitPat("b???")
+  def RS2   = 0.U(3.W)
+  def I_IMM = 1.U(3.W)
+  def S_IMM = 2.U(3.W)
+  def B_IMM = 3.U(3.W)
+  def U_IMM = 4.U(3.W)
+  def J_IMM = 5.U(3.W)
+  def XXX   = 0.U(3.W)
 }
 
 object rs_t {
-  def REG = UInt("h0", 2.W)
-  def ALU = UInt("h1", 2.W)
-  def EXE = UInt("h2", 2.W)
-  def MEM = UInt("h3", 2.W)
+  def REG = "h0".U(2.W)
+  def ALU = "h1".U(2.W)
+  def EXE = "h2".U(2.W)
+  def MEM = "h3".U(2.W)
 }
 
 class CtrlT extends Bundle {
@@ -197,7 +199,7 @@ class CtrlT extends Bundle {
 
 class IdT extends Bundle {
   val pc = UInt(32.W)
-  val ir = Inst
+  val ir = new Inst
 }
 
 class ExT extends Bundle {
@@ -241,35 +243,40 @@ class WbT extends Bundle {
 }
 
 object isload {
-  def apply(op: UInt(4.W)): Bool = {
+  def apply(x: UInt): Bool = {
+    val op = x(3, 0)
     val ret = op === op_t.LOAD_WORD || op === op_t.LOAD_HALF || op === op_t.LOAD_BYTE || op === op_t.LOAD_HALF_UNSIGNED || op === op_t.LOAD_BYTE_UNSIGNED
     ret
   }
 }
 
 object isstore {
-  def apply(op: UInt(4.W)): Bool = {
-    val ret = op === op_t.STORE_WORD || op_t.STORE_HALF || op_t.STORE_BYTE
+  def apply(x: UInt): Bool = {
+    val op = x(3, 0)
+    val ret = op === op_t.STORE_WORD || op === op_t.STORE_HALF || op === op_t.STORE_BYTE
     ret
   }
 }
 
 object isinteger {
-  def applay(op: UInt(4.W)): Bool = {
+  def apply(x: UInt): Bool = {
+    val op = x(3, 0)
     val ret = op === op_t.INTEGER
     ret
   }
 }
 
 object isjump {
-  def applay(op: UInt(4.W)): Bool = {
+  def apply(x: UInt): Bool = {
+    val op = x(3, 0)
     val ret = op === op_t.JUMP
     ret
   }
 }
 
 object isbranch {
-  def applay(op: UInt(4.W)): Bool = {
+  def apply(x: UInt): Bool = {
+    val op = x(3, 0)
     val ret = op === op_t.BRANCH
     ret
   }

@@ -1,36 +1,35 @@
 package rv32
 
-import Chisel._
 import chisel3._
 import chisel3.util._
 
 object DecCtrl {
-  def apply(op: UInt(4.W), fn: UInt(4.W), br: UInt(3.W), op1: UInt(1.W), op2: UInt(3.W)): CtrlT = {
-    val ret = Wire(new CtrlT)
-    ret.op := op
-    ret.fn := fn
-    ret.br := br
-    ret.op1 := op1
-    ret.op2 := op2
+  def apply(op: UInt, fn: UInt, br: UInt, op1: UInt, op2: UInt): CtrlT = {
+    val ret = new CtrlT
+    ret.op := op(3, 0)
+    ret.fn := fn(3, 0)
+    ret.br := br(2, 0)
+    ret.op1 := op1(0)
+    ret.op2 := op2(2, 0)
     ret
   }
 }
 
 class Decode extends Module {
   val io = IO(new Bundle {
-    val lock = Input Bool
-    val rs1_sel = Input UInt(5.W)
-    val rs2_sel = Input UInt(5.W)
-    val alu_data = Input UInt(32.W)
-    val exe_data = Input UInt(32.W)
-    val mem_data = Input UInt(32.W)
-    val rs1_data = Input UInt(32.W)
-    val rs2_data = Input UInt(32.W)
-    val rs1_addr = Output UInt(5.W)
-    val rs2_addr = Output UInt(5.W)
-    val invalid = Output Bool()
-    val source = new Axis(data_width = IdT.getWidth).flip()
-    val sink = new Axis(data_width = ExT.getWidth)
+    val lock = Input(Bool())
+    val rs1_sel = Input(UInt(5.W))
+    val rs2_sel = Input(UInt(5.W))
+    val alu_data = Input(UInt(32.W))
+    val exe_data = Input(UInt(32.W))
+    val mem_data = Input(UInt(32.W))
+    val rs1_data = Input(UInt(32.W))
+    val rs2_data = Input(UInt(32.W))
+    val rs1_addr = Output(UInt(5.W))
+    val rs2_addr = Output(UInt(5.W))
+    val invalid = Output(Bool())
+    val source = Flipped(Irrevocable(new IdT))
+    val sink = Irrevocable(new ExT)
   })
   val NONE  = DecCtrl(op_t.NONE,                fn_t.ANY,   br_t.NA,   op1_t.XX,  op2_t.XXX)
   val ADDI  = DecCtrl(op_t.INTEGER,             fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.I_IMM)
@@ -67,87 +66,82 @@ class Decode extends Module {
   val LHU   = DecCtrl(op_t.LOAD_HALF_UNSIGNED,  fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.I_IMM)
   val LB    = DecCtrl(op_t.LOAD_BYTE,           fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.I_IMM)
   val LBU   = DecCtrl(op_t.LOAD_BYTE_UNSIGNED,  fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.I_IMM)
-  val SW    = DecCtrl(op_t.SAVE_WORD,           fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.S_IMM)
-  val SH    = DecCtrl(op_t.SAVE_HALF,           fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.S_IMM)
-  val SB    = DecCtrl(op_t.SAVE_BYTE,           fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.S_IMM)
+  val SW    = DecCtrl(op_t.STORE_WORD,          fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.S_IMM)
+  val SH    = DecCtrl(op_t.STORE_HALF,          fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.S_IMM)
+  val SB    = DecCtrl(op_t.STORE_BYTE,          fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.S_IMM)
 
-  val id = Wire(new IdT)
-  val ex_nx = Wire(new ExT)
-  val ex = RegEnable(ex_nx, io.sink.t.ready)
-  val pc = Wire(UInt(32.W))
-  val ir = Wire(Inst)
-  val ctrl = Wire(CtrlT)
+  val id = io.source.bits
+  val ex = Reg(new ExT)
+  val pc = id.pc
+  val ir = id.ir
+  val ctrl = new CtrlT
 
-  id := io.source.t.data
-  io.sink.t.data := ex
-  pc := id.data.pc
-  ir := id.data.ir
+  val i_imm = ir.i_imm
+  val s_imm = ir.s_imm
+  val b_imm = ir.b_imm
+  val u_imm = ir.u_imm
+  val j_imm = ir.j_imm
+
+  val rs1, rs2, op1, op2 = UInt(32.W)
+
+  io.sink.bits.data := ex
   io.rs1_addr := ir.r_rs1
   io.rs2_addr := ir.r_rs2
 
-  val i_imm, s_imm, b_imm, u_imm, j_imm = Wire(UInt(32.W))
-  i_imm := ir.i_imm
-  s_imm := ir.s_imm
-  b_imm := ir.b_imm
-  u_imm := ir.u_imm
-  j_imm := ir.j_imm
-
-  val rs1, rs2, op1, op2 = Wire(UInt(32.W))
-
   ctrl := NONE
   switch(ir.r_opcode) {
-    is(opcode.OP_IMM) {
+    is(opcode_t.OP_IMM) {
       switch(ir.r_funct3) {
-        is(funct3.ADD) { ctrl := ADDI }
-        is(funct3.SLL) { ctrl := SLLI }
-        is(funct3.SLT) { ctrl := SLTI }
-        is(funct3.SLTIU) { ctrl := SLTIU }
-        is(funct3.XOR) { ctrl := XORI }
-        is(funct3.SRL) { ctrl := Mux(ir.r_funct7(5), SRAI, SRLI) }
-        is(funct3.OR ) { ctrl := ORI  }
-        is(funct3.AND) { ctrl := ANDI }
+        is(funct3_t.ADD) { ctrl := ADDI }
+        is(funct3_t.SLL) { ctrl := SLLI }
+        is(funct3_t.SLT) { ctrl := SLTI }
+        is(funct3_t.SLTIU) { ctrl := SLTIU }
+        is(funct3_t.XOR) { ctrl := XORI }
+        is(funct3_t.SRL) { ctrl := Mux(ir.r_funct7(5), SRAI, SRLI) }
+        is(funct3_t.OR ) { ctrl := ORI  }
+        is(funct3_t.AND) { ctrl := ANDI }
       }
     }
-    is(opcode.OP) {
+    is(opcode_t.OP) {
       switch(ir.r_funct3) {
-        is(funct3.ADD) { ctrl := Mux(ir.r_funct7(5), SUB, ADD) }
-        is(funct3.SLL) { ctrl := SLL }
-        is(funct3.SLT) { ctrl := SLT }
-        is(funct3.SLTIU) { ctrl := SLTU }
-        is(funct3.XOR) { ctrl := XOR }
-        is(funct3.SRL) { ctrl := Mux(ir.r_funct7(5), SRA, SRL) }
-        is(funct3.OR ) { ctrl := OR  }
-        is(funct3.AND) { ctrl := AND }
+        is(funct3_t.ADD) { ctrl := Mux(ir.r_funct7(5), SUB, ADD) }
+        is(funct3_t.SLL) { ctrl := SLL }
+        is(funct3_t.SLT) { ctrl := SLT }
+        is(funct3_t.SLTIU) { ctrl := SLTU }
+        is(funct3_t.XOR) { ctrl := XOR }
+        is(funct3_t.SRL) { ctrl := Mux(ir.r_funct7(5), SRA, SRL) }
+        is(funct3_t.OR ) { ctrl := OR  }
+        is(funct3_t.AND) { ctrl := AND }
       }
     }
-    is(opcode.LUI)    { ctrl := LUI   }
-    is(opcode.AUIPC)  { ctrl := AUIPC }
-    is(opcode.JAL)    { ctrl := JAL   }
-    is(opcode.JALR)   { ctrl := JALR  }
-    is(opcode.BRANCH) {
+    is(opcode_t.LUI)    { ctrl := LUI   }
+    is(opcode_t.AUIPC)  { ctrl := AUIPC }
+    is(opcode_t.JAL)    { ctrl := JAL   }
+    is(opcode_t.JALR)   { ctrl := JALR  }
+    is(opcode_t.BRANCH) {
       switch(ir.r_funct3) {
-        is(funct3.BEQ)  { ctrl := BEQ }
-        is(funct3.BNE)  { ctrl := BNE }
-        is(funct3.BLT)  { ctrl := BLT }
-        is(funct3.BLTU) { ctrl := BLTU }
-        is(funct3.BGE)  { ctrl := BGE }
-        is(funct3.BGEU) { ctrl := BGEU }
+        is(funct3_t.BEQ)  { ctrl := BEQ }
+        is(funct3_t.BNE)  { ctrl := BNE }
+        is(funct3_t.BLT)  { ctrl := BLT }
+        is(funct3_t.BLTU) { ctrl := BLTU }
+        is(funct3_t.BGE)  { ctrl := BGE }
+        is(funct3_t.BGEU) { ctrl := BGEU }
       }
     }
-    is(opcdoe.LOAD) {
+    is(opcode_t.LOAD) {
       switch(ir.r_funct3) {
-        is(funct3.LW)   { ctrl := LW }
-        is(funct3.LH)   { ctrl := LH }
-        is(funct3.LHU)  { ctrl := LHU }
-        is(funct3.LB)   { ctrl := LB }
-        is(funct3.LBU)  { ctrl := LBU }
+        is(funct3_t.LW)   { ctrl := LW }
+        is(funct3_t.LH)   { ctrl := LH }
+        is(funct3_t.LHU)  { ctrl := LHU }
+        is(funct3_t.LB)   { ctrl := LB }
+        is(funct3_t.LBU)  { ctrl := LBU }
       }
     }
-    is(opcode.STORE) {
+    is(opcode_t.STORE) {
       switch(ir.r_funct3) {
-        is(funct3.SB)   { ctrl := SB }
-        is(funct3.SH)   { ctrl := SH }
-        is(funct3.SW)   { ctrl := SW }
+        is(funct3_t.SB)   { ctrl := SB }
+        is(funct3_t.SH)   { ctrl := SH }
+        is(funct3_t.SW)   { ctrl := SW }
       }
     }
   }
@@ -176,23 +170,24 @@ class Decode extends Module {
     is(op2_t.J_IMM) { op2 := j_imm }
   }
 
-  ex_nx.ctrl.op := ctrl.op
-  ex_nx.ctrl.fn := ctrl.fn
-  ex_nx.ctrl.br := ctrl.br
-  ex_nx.data.pc := pc
-  ex_nx.data.op1:= op1
-  ex_nx.data.op2:= op2
-  ex_nx.data.rs1:= rs1
-  ex_nx.data.rs2:= rs2
-  ex_nx.data.rd := ir.r_rd
+  when(io.sink.ready) {
+    ex.ctrl.op := ctrl.op
+    ex.ctrl.fn := ctrl.fn
+    ex.ctrl.br := ctrl.br
+    ex.data.pc := pc
+    ex.data.op1:= op1
+    ex.data.op2:= op2
+    ex.data.rs1:= rs1
+    ex.data.rs2:= rs2
+    ex.data.rd := ir.r_rd
+  }
 
-  val tvalid_nx = Wire(Bool)
-  val tvalid = Reg(tvalid_nx) init 0
-  when(io.source.t.valid & io.source.t.ready) {tvalid_nx := true.B}
-  .elsewhen(io.sink.t.valid & io.sink.t.ready) {tvalid_nx := false.B}
+  val tvalid = RegInit(false.B)
+  when(io.source.valid & io.source.ready) {tvalid := true.B}
+  .elsewhen(io.sink.valid & io.sink.ready) {tvalid := false.B}
 
-  io.sink.t.valid = tvalid
-  io.source.t.ready := io.sink.t.ready & ~io.lock
-  io.invalid := ctrl.op === op_t.NONE & io.source.t.valid
+  io.sink.valid := tvalid
+  io.source.ready := io.sink.ready & ~io.lock
+  io.invalid := ctrl.op === op_t.NONE & io.source.valid
 }
 
