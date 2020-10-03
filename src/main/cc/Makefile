@@ -1,4 +1,4 @@
-PREFIX  ?= /opt/riscv/riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubuntu14/bin/riscv64-unknown-elf-
+PREFIX  ?= $(RVTOOL_HOME)/bin/riscv64-unknown-elf-
 AS      = $(PREFIX)as
 CC	= $(PREFIX)gcc
 COPTS = -march=rv32i -mabi=ilp32 -g

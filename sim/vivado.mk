@@ -23,7 +23,7 @@ RTLDIR = $(PRJDIR)/src/main/sv/rtl
 INTFDIR= $(PRJDIR)/src/main/sv/intf
 LIBDIR = xsim.dir/$(LIB)
 
-VIVADO_DIR ?= /opt/Xilinx/Vivado/2019.2
+VIVADO_DIR ?= $(VIVADO_HOME)
 
 PATH := $(VIVADO_DIR)/bin:$(PATH)
 
