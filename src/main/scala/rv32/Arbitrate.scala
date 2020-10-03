@@ -16,7 +16,7 @@ class Arbitrate extends Module {
   def DATA = 2.U(2.W)
   def MMIO = 3.U(2.W)
 
-  val read, write = UInt(2.W)
+  val read, write = Wire(UInt(2.W))
 
   val wcode = io.cache.aw.bits.addr >= rv32.CODE_BASE && io.cache.aw.bits.addr < rv32.CODE_BASE + rv32.CODE_SIZE
   val wdata = io.cache.aw.bits.addr >= rv32.DATA_BASE && io.cache.aw.bits.addr < rv32.DATA_BASE + rv32.DATA_SIZE

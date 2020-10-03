@@ -344,4 +344,6 @@ sim/*.jou
 sim/*.pb
 sim/*.wdb
 sim/xsim.dir
-
+sim/Cpu.*
+sim/*.mem
+sim/work

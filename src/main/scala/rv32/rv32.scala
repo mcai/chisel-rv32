@@ -107,7 +107,7 @@ class Inst extends Bundle {
   def u_imm_31_12 = inst(31, 12)
   def u_imm_rd  = inst(11, 7)
   def u_opcode  = inst(6, 8)
-  def u_imm     = Cat(u_imm_31_12, "0".U(12.W)).asUInt
+  def u_imm     = Cat(u_imm_31_12, 0.U(12.W)).asUInt
 
   def j_imm_20  = inst(31)
   def j_imm_10_1= inst(30, 21)

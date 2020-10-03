@@ -19,7 +19,7 @@ class Fetch extends Module {
 
   val pc = RegInit(rv32.RESET_ADDR)
   val lock = io.sink.valid & ~io.sink.ready
-  val id = new IdT
+  val id = Wire(new IdT)
   io.sink.bits := id
   id.ir.inst := io.cache.r.bits.data
   id.pc := pc
@@ -44,6 +44,13 @@ class Fetch extends Module {
   }
   io.cache.ar.bits.prot := 0.U
   io.cache.r.ready := ~lock
+  io.cache.aw.valid := false.B
+  io.cache.aw.bits.addr := 0.U
+  io.cache.aw.bits.prot := 0.U
+  io.cache.w.valid := false.B
+  io.cache.w.bits.data := 0.U
+  io.cache.w.bits.strb := 0.U
+  io.cache.b.ready := false.B
   io.sink.valid := io.cache.r.valid & ~io.branch & ~trapped
 }
 

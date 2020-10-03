@@ -4,11 +4,10 @@
 # See LICENSE for more details.
 #
 
-TOP ?= cpubench.sv
+TOP ?= testbench.sv
 PKG ?=
 INT ?=
 RTL ?=
-GEN ?=
 ALL = $(PKG) $(INT) $(RTL) $(TOP)
 
 INIT ?= src/boot.mem
@@ -17,17 +16,18 @@ TIME ?= "1ns/1ps"
 LIB  = work
 SNAP = $(LIB).$(basename $(TOP))
 
-PRJDIR = $(PROJ)
+PRJDIR = $(PROJ)/ref
 SIMDIR = $(PRJDIR)/sim
-RTLDIR = $(PRJDIR)/src/main/sv/rtl
-INTFDIR= $(PRJDIR)/src/main/sv/intf
+RTLDIR = $(PRJDIR)/sv/rtl
+INTFDIR= $(PRJDIR)/sv/intf
+SRCDIR = $(PRJDIR)/sim/src
 LIBDIR = xsim.dir/$(LIB)
 
 VIVADO_DIR ?= /opt/Xilinx/Vivado/2019.2
 
 PATH := $(VIVADO_DIR)/bin:$(PATH)
 
-VPATH = $(RTLDIR):$(INTFDIR):$(SIMDIR):$(LIBDIR)
+VPATH = $(RTLDIR):$(INTFDIR):$(SRCDIR):$(LIBDIR)
 
 .PHONY: all test tcl gui xsim xelab xvlog
 
@@ -58,12 +58,11 @@ $(LIBDIR)/$(INT:.sv=.sdb): | $(PKG:.sv=.sdb)
 
 $(LIBDIR)/$(RTL:.sv=.sdb): | $(PKG:.sv=.sdb) $(INT:.sv=.sdb)
 
-$(LIBDIR)/$(TOP:.sv=.sdb): $(TOP) | $(INIT) $(PKG:.sv=.sdb) $(INT:.sv=.sdb) $(RTL:.sv=.sdb) $(LIBDIR)/@cpu.sdb
+$(LIBDIR)/$(TOP:.sv=.sdb): $(TOP) | $(INIT) $(PKG:.sv=.sdb) $(INT:.sv=.sdb) $(RTL:.sv=.sdb)
 	xvlog -nolog --sv --work $(LIB) --define TEXT_FILE=\"$(word 1,$|)\" --define DATA_FILE=\"$(word 2,$|)\" -L $(LIB) $<
-
-$(LIBDIR)/@cpu.sdb: Cpu.v
-	xvlog -nolog --work $(LIB) -L $(LIB) $<
 
 $(LIBDIR)/%.sdb: %.sv
 	xvlog -nolog --sv --work $(LIB) -L $(LIB) $<
 
+$(LIBDIR):
+	mkdir -p $@

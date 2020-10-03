@@ -5,7 +5,7 @@ import chisel3.util._
 
 object DecCtrl {
   def apply(op: UInt, fn: UInt, br: UInt, op1: UInt, op2: UInt): CtrlT = {
-    val ret = new CtrlT
+    val ret = Wire(new CtrlT)
     ret.op := op(3, 0)
     ret.fn := fn(3, 0)
     ret.br := br(2, 0)
@@ -18,8 +18,8 @@ object DecCtrl {
 class Decode extends Module {
   val io = IO(new Bundle {
     val lock = Input(Bool())
-    val rs1_sel = Input(UInt(5.W))
-    val rs2_sel = Input(UInt(5.W))
+    val rs1_sel = Input(UInt(2.W))
+    val rs2_sel = Input(UInt(2.W))
     val alu_data = Input(UInt(32.W))
     val exe_data = Input(UInt(32.W))
     val mem_data = Input(UInt(32.W))
@@ -74,7 +74,7 @@ class Decode extends Module {
   val ex = Reg(new ExT)
   val pc = id.pc
   val ir = id.ir
-  val ctrl = new CtrlT
+  val ctrl = Wire(new CtrlT)
 
   val i_imm = ir.i_imm
   val s_imm = ir.s_imm
@@ -82,9 +82,9 @@ class Decode extends Module {
   val u_imm = ir.u_imm
   val j_imm = ir.j_imm
 
-  val rs1, rs2, op1, op2 = UInt(32.W)
+  val rs1, rs2, op1, op2 = Wire(UInt(32.W))
 
-  io.sink.bits.data := ex
+  io.sink.bits := ex
   io.rs1_addr := ir.r_rs1
   io.rs2_addr := ir.r_rs2
 

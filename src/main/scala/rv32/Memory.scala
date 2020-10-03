@@ -9,9 +9,8 @@ class Memory extends Module {
     val source = Flipped(Irrevocable(new MmT))
     val sink = Irrevocable(new WbT)
   })
-  val rdata = UInt(32.W)
-  val wstrb = UInt(4.W)
-  val wdata = UInt(32.W)
+  val rdata, wdata = Wire(UInt(32.W))
+  val wstrb = Wire(UInt(4.W))
   val wb = Reg(new WbT)
 
   val mm = io.source.bits

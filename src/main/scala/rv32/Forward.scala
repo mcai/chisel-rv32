@@ -26,14 +26,14 @@ class Forward extends Module {
   val wb_rs2 = io.writeback.valid & (id.ir.r_rs2 === wb.data.rd.addr) & (isinteger(wb.ctrl.op) | isload(wb.ctrl.op))
 
   io.rs1 := rs_t.REG
-  when(id.ir.r_rs1 != 0.U) {
+  when(id.ir.r_rs1 =/= 0.U) {
     when(ex_rs1) { io.rs1 := rs_t.ALU }
     .elsewhen(mm_rs1) { io.rs1 := rs_t.EXE }
     .elsewhen(wb_rs1) { io.rs1 := rs_t.MEM }
   }
 
   io.rs2 := rs_t.REG
-  when(id.ir.r_rs2 != 0.U) {
+  when(id.ir.r_rs2 =/= 0.U) {
     when(ex_rs2) { io.rs2 := rs_t.ALU }
     .elsewhen(mm_rs2) { io.rs2 := rs_t.EXE }
     .elsewhen(wb_rs2) { io.rs2 := rs_t.MEM }
