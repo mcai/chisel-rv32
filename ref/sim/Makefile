@@ -35,5 +35,5 @@ INIT = src/testbench.text.mem src/testbench.data.mem
 include vivado.mk
 
 clean:
-	 $(RM) -rf *.wcfg *.log *.jou *.pb *.vcd *.wdb *.str xsim.dir .Xil
+	 $(RM) -rf *.log *.jou *.pb *.vcd *.wdb *.str xsim.dir .Xil
 

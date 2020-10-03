@@ -50,7 +50,7 @@ class Fetch extends Module {
   io.cache.w.valid := false.B
   io.cache.w.bits.data := 0.U
   io.cache.w.bits.strb := 0.U
-  io.cache.b.ready := false.B
+  io.cache.b.ready := true.B
   io.sink.valid := io.cache.r.valid & ~io.branch & ~trapped
 }
 

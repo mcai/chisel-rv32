@@ -1,13 +1,10 @@
 DIRS = sim
 
-all: sim/Cpu.v
-	for d in $(DIRS); do make -C $$d; done
+sim/Cpu.v: src/main/scala/rv32/*.scala
+	sbt 'run sim'
 
 test:
 	for d in $(DIRS); do make -C $$d test; done
-
-sim/Cpu.v: src/main/scala/rv32/*.scala
-	sbt 'run sim'
 
 clean:
 	for d in $(DIRS); do make -C $$d clean; done

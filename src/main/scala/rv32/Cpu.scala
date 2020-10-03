@@ -65,7 +65,7 @@ class Cpu extends Module {
   x_fetch.io.trap := trap
   x_fetch.io.handler := rv32.TRAP_ADDR
   x_fetch.io.stall := stall
-  x_fetch.io.cache <> io.code
+  io.code <> x_fetch.io.cache
   id <> x_fetch.io.sink
 
   x_regfile.io.rs1_addr := rs1_addr
@@ -94,8 +94,16 @@ class Cpu extends Module {
 
   x_writeback.io.source <> wb
 
-  x_arbitrate.io.cache <> cache
-  io.code <> x_arbitrate.io.code
   io.data <> x_arbitrate.io.data
   io.mmio <> x_arbitrate.io.mmio
+  x_arbitrate.io.code.aw.ready := true.B
+  x_arbitrate.io.code.w.ready := true.B
+  x_arbitrate.io.code.b.valid := false.B
+  x_arbitrate.io.code.b.bits.resp := Axi4.OKAY
+  x_arbitrate.io.code.ar.ready := true.B
+  x_arbitrate.io.code.r.valid := false.B
+  x_arbitrate.io.code.r.bits.data := 0.U
+  x_arbitrate.io.code.r.bits.resp := Axi4.OKAY
+  x_arbitrate.io.cache <> cache
+
 }

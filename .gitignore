@@ -343,7 +343,13 @@ sim/webtalk*
 sim/*.jou
 sim/*.pb
 sim/*.wdb
+sim/*.str
 sim/xsim.dir
 sim/Cpu.*
 sim/*.mem
 sim/work
+sim/.Xil
+sim/rv32.work
+sim/transcript
+sim/vsim.wlf
+sim/rv32.cr.mti

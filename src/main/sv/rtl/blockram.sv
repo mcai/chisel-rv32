@@ -44,13 +44,13 @@ module blockram #(
         initial $readmemh(INIT_FILE, mem);
 
     // Port A
-    always_ff @(posedge clk)
+    always @(posedge clk)
         if (ena)
             for (int i = 0; i < $bits(wea); i++)
                 if (wea[i])
                     mem[addra][8*i +: 8] <= dia[8*i +: 8];
 
-    always_ff @(posedge clk)
+    always @(posedge clk)
         if (ena)
             if (rsta)
                 _doa <= INIT_DATA_A;
@@ -58,13 +58,13 @@ module blockram #(
                 _doa <= mem[addra];
 
     // Port B
-    always_ff @(posedge clk)
+    always @(posedge clk)
         if (enb)
             for (int i = 0; i < $bits(web); i++)
                 if (web[i])
                     mem[addrb][8*i +: 8] <= dib[8*i +: 8];
 
-    always_ff @(posedge clk)
+    always @(posedge clk)
         if (enb)
             if (rstb)
                 _dob <= INIT_DATA_B;

@@ -1,8 +1,8 @@
 ; vsim modelsim.ini file, version 10.4
 [Version]
-INIVersion = "10.6c"
+INIVersion = "10.4c"
 
-; Copyright 1991-2017 Mentor Graphics Corporation
+; Copyright 1991-2015 Mentor Graphics Corporation
 ;
 ; All Rights Reserved.
 ;
@@ -71,15 +71,8 @@ ieee_env = $MODEL_TECH/../ieee_env
 infact = $MODEL_TECH/../infact
 vhdlopt_lib = $MODEL_TECH/../vhdlopt_lib
 
-; Automatically perform logical->physical mapping for physical libraries that
-; appear in -L/-Lf options with filesystem path delimiters (e.g. '.' or '/').
-; The tail of the filesystem path name is chosen as the logical library name.
-; For example, in the command “vopt -L ./path/to/lib1 –o opttop top”,
-; vopt automatically performs the mapping “lib1 -> ./path/to/lib1”.
-; See the User Manual for more details.
-;
-; AutoLibMapping = 0
 
+work = rv32.work
 [DefineOptionset]
 ; Define optionset entries for the various compilers, vmake, and vsim.
 ; These option sets can be used with the "-optionset <optionsetname>" syntax.
@@ -425,11 +418,11 @@ Explicit = 1
 ; Stats = time,cmd,msg
 
 ; Set the threshold for automatically identifying sparse Verilog memories.
-; A memory with total size in bytes equal to or more than the sparse memory
-; threshold gets marked as sparse automatically, unless specified otherwise
-; in source code or by the +nosparse commandline option of vlog or vopt.
-; The default is 1M.  (i.e. memories with total size equal
-; to or greater than 1Mb are marked as sparse)
+; A memory with depth equal to or more than the sparse memory threshold gets
+; marked as sparse automatically, unless specified otherwise in source code
+; or by +nosparse commandline option of vlog or vopt.
+; The default is 1M.  (i.e. memories with depth equal
+; to or greater than 1M are marked as sparse)
 ; SparseMemThreshold = 1048576 
 
 ; Set the prefix to be honored for synthesis and coverage pragma recognition.
@@ -648,8 +641,10 @@ LibrarySearchPath = mtiAvm mtiRnm mtiOvm mtiUvm mtiUPF infact
 ; WrealType = 1
 
 ; Controls SystemVerilog Language Extensions.  These options enable
-; some non-LRM compliant behavior.
-; SvExtensions = [+|-]<extension>[,[+|-]<extension>*]
+; some non-LRM compliant behavior.  Valid extensions are:
+; "acum", "atpi", "catx", "daoa", "feci", "fin0", "idcl",
+; "iddp", "pae", "sccts", "spsl", "stop0", "udm0", and "uslt".
+; SvExtensions = uslt,spsl,sccts
 
 ; Generate symbols debugging database in only some special cases to save on
 ; the number of files in the library. For other design-units, this database is
@@ -703,9 +698,6 @@ LibrarySearchPath = mtiAvm mtiRnm mtiOvm mtiUvm mtiUPF infact
 ; Default is 1 (enabled)  
 ; CreateLib = 1
 
-; Enable use of UVMC library.  Default is off.
-; UseUvmc = 1
-
 [vopt]
 ; Turn on code coverage in vopt.  Default is off. 
 ; Coverage = sbceft
@@ -715,14 +707,13 @@ LibrarySearchPath = mtiAvm mtiRnm mtiOvm mtiUvm mtiUPF infact
 ; CoverOpt = 3
 
 ; Controls set of CoverConstructs that are being considered for Coverage 
-; Collection.
-; Some of Valid options are: default,set1,set2
-; Covermode = default
+; Collection. (Default is covermode 2).
+; Covermode = 2
 
 ; Controls set of HDL cover constructs that would be considered(or not considered)
-; for Coverage Collection. (Default corresponds to covermode default). 
-; Some of Valid options are: "ca", "citf", "cifl", "tcint", "fsmqs".
-; Coverconstruct = noca,nocitf,nofsmtf,nofsmds,noctes,nocicl,nocprc,nocfl,nofsmup,nocifl,nocpm,notcint,nocpkg,nocsva
+; for Coverage Collection. (Default corresponds to covermode 2). 
+; Valid options are: "ca", "citf", "cifl", "tcint", "fsmqs".
+; Coverconstruct = ca,citf,li
 
 ; Increase or decrease the maximum number of rows allowed in a UDP table
 ; implementing a VHDL condition coverage or expression coverage expression.
@@ -785,8 +776,9 @@ LibrarySearchPath = mtiAvm mtiRnm mtiOvm mtiUvm mtiUPF infact
 ; ParallelJobs = 0 
 
 ; Controls SystemVerilog Language Extensions.  These options enable
-; some non-LRM compliant behavior.
-; SvExtensions = [+|-]<extension>[,[+|-]<extension>*]
+; some non-LRM compliant behavior.  Valid extensions are "feci",
+; "pae", "uslt", "spsl", "fin0" and "sccts".
+; SvExtensions = uslt,spsl,sccts
 
 ; Load the specified shared objects with the RTLD_GLOBAL flag.
 ; This gives global visibility to all symbols in the shared objects,
@@ -833,7 +825,7 @@ Resolution = ns
 UserTimeUnit = default
 
 ; Default run length
-RunLength = 100
+RunLength = 100 ns
 
 ; Maximum iterations that can be run without advancing simulation time
 IterationLimit = 10000000
@@ -968,7 +960,7 @@ ShowFunctions = 1
 
 ; Default radix for all windows and commands.
 ; Radix may be one of: symbolic, ascii, binary, octal, decimal, hex, unsigned
-; Flags may be one of: enumnumeric, showbase, wreal
+; Flags may be one of: enumnumeric, showbase
 DefaultRadix = hexadecimal
 DefaultRadixFlags = showbase
 ; Set to 1 for make the signal_force VHDL and Verilog functions use the 
@@ -996,17 +988,6 @@ DefaultRadixFlags = showbase
 
 ; File for saving command transcript, this option is ignored when -batch option is used
 TranscriptFile = transcript
-
-; Transcript file long line wrapping mode(s)
-;   mode == 0 :: no wrapping, line recorded as is
-;   mode == 1 :: wrap at first whitespace after WSColumn
-;                or at Column.
-;   mode == 2 :: wrap as above, but add continuation 
-;                character ('\') at end of each wrapped line
-;
-; WrapMode = 0
-; WrapColumn = 30000
-; WrapWSColumn = 27000
 
 ; File for saving command history
 ; CommandHistory = cmdhist.log
@@ -1222,10 +1203,11 @@ ConcurrentFileLimit = 40
 
 
 ; Specify default UVM-aware debug options if the vsim -uvmcontrol switch is not used.
-; Valid options include: all, none, verbose, disable, struct, reseed, msglog, trlog, certe.
+; Valid options include: all, none, verbose, disable, struct, msglog, trlog, certe.
 ; Options can be enabled by just adding the name, or disabled by prefixing the option with a "-".
 ; The list of options must be delimited by commas, without spaces or tabs.
-;
+; The default is UVMControl = struct
+
 ; Some examples
 ; To turn on all available UVM-aware debug features:
 ; UVMControl = all
@@ -1392,12 +1374,6 @@ ScMainStackSize = 10 Mb
 ; to crash if the code in sc_main is dependent on some simulation state.
 ; Default is on.
 ScMainFinishOnQuit = 1
-
-; Enable calling of the DPI export taks/functions from the
-; SystemC start_of_simulation() callback.
-; The default is off.
-; EnableDpiSosCb = 1
-
 
 ; Set the SCV relationship name that will be used to identify phase
 ; relations.  If the name given to a transactor relation matches this
@@ -1782,17 +1758,9 @@ OnFinish = ask
 ;     off: turn off the flow. The undefined symbols will trigger an immediate load failure.
 ;     verbose: Turn on the flow and report the undefined symbols for each shared library.
 ; NOTE: This variable can be overriden with vsim switch "-undefsyms".
-; The default is on.
+; The default is off.
 ;
-; UndefSyms = off
-
-; Enable the support for checkpointing foreign C++ libraries.
-; The valid arguments are: 1 and 0. 
-;     1 : turn on the support
-;     0 : turn off the support (default)
-; This option is not supported on the Windows platforms.
-;
-; AllowCheckpointCpp = 1
+; UndefSyms = on
 
 ; Initial seed for the random number generator of the root thread (SystemVerilog).
 ; NOTE: This variable can be overridden with the vsim "-sv_seed" command line switch.
@@ -1829,7 +1797,7 @@ OnFinish = ask
 ; The default value is 10000. A value of 0 indicates no limit.
 ; SolveArrayResizeMax = 10000
 
-; Error message severity when randomize() failure is detected.
+; Error message severity when randomize() failure is detected (SystemVerilog).
 ; 0 = No error  1 = Warning  2 = Error  3 = Failure  4 = Fatal
 ; The default is 0 (no error).
 ; SolveFailSeverity = 0
@@ -1955,29 +1923,11 @@ MvcHome = $MODEL_TECH/..
 ; Enable/disable non-LRM compliant SystemVerilog language extensions.
 ; Valid extensions are:
 ;   cfce        - generate an error if $cast fails as a function
-;   dfsp        - sets default format specifier as %p, if no format specifier is given for unpacked array in $display and related systasks
 ;   expdfmt     - enable format string extensions for $display/$sformatf
-;   extscan     - support values greater than 32 bit for string builtin methods (atohex, atobin, atooct, atoi)
 ;   fmtcap      - prints capital hex digits with %X/%H in display calls
 ;   iddp        - ignore DPI disable protocol check
-;   noexptc     - ignore DPI export type name overloading check
-;   lfmt        - zero-pad data if '0' prefixes width in format specifier (e.g. "%04h")
-;   realrand    - support randomize() with real variables and constraints (Default)
+;   nonrandstab - disable seeding of "non-random" class instances
 ; SvExtensions = [+|-]<extension>[,[+|-]<extension>*]
-
-; Enable/disable non-LRM compliant SystemVerilog constrained-random language extensions.
-; Valid extensions are:
-l   arraymode    - consider rand_mode of unpacked array field independently from its elements
-;   deepcheck    - allow randomize(null) to recursively consider constraints from member rand class handles  
-;   forkjoinstab - preserve parent thread random stability when seeding fork/join sub-threads (Default)
-;   nonrandstab  - disable seeding of "non-random" class instances (Default)
-;   nodist       - interpret 'dist' constraint as 'inside' (ACT only)
-;   noorder      - ignore solve/before ordering constraints (ACT only)
-;   packrandidx  - allow random index for packed variable in constraint (Default)
-;   promotedist  - promote priority of 'dist' constraint if LHS has no solve/before
-;   randstruct   - consider all fields of unpacked structs as 'rand'
-;   skew         - skew randomize results (ACT only)
-; SvRandExtensions = [+|-]<extension>[,[+|-]<extension>*]
 
 ; Controls the formatting of '%p' and '%P' conversion specification, used in $display
 ; and similar system tasks.
@@ -1995,11 +1945,8 @@ l   arraymode    - consider rand_mode of unpacked array field independently from
 ;    (e.g. SVPrettyPrintFlags=E50 will limit the output to 50 elements of an array).
 ; 6. SVPrettyPrintFlags=D<depth> suppresses the output of sub-elements below <depth>.
 ;    (e.g. SVPrettyPrintFlags=D5 will suppresses the output of sub elements below a depth of 5).
-; 7. SVPrettyPrintFlags=R<specifier> shows the output of specifier %p as per the specifed radix.
-;    It changes the output in $display and similar systasks. It does not affect formatted output functions ($displayh etc)).
-;    (e.g. SVPrettyPrintFlags=Rb will show the output of %p specifier in binary format.
-; 8. Items 1-7 above can be combined as a comma separated list.
-;    (e.g. SVPrettyPrintFlags=I4S,L20,C256,F4,E50,D5,Rb)
+; 7. Items 1-6 above can be combined as a comma separated list.
+;    (e.g. SVPrettyPrintFlags=I4S,L20,C256,F4,E50,D5)
 ; SVPrettyPrintFlags=I4S
 
 [lmc]
@@ -2103,3 +2050,74 @@ suppress = 8780 ;an explanation can be had by running: verror 8780
 ; This setting is applied together with FlatLibPageDeletePercentage.
 ; FlatLibPageDeleteThreshold = 1000
 
+[Project]
+; Warning -- Do not edit the project properties directly.
+;            Property names are dynamic in nature and property
+;            values have special syntax.  Changing property data directly
+;            can result in a corrupt MPF file.  All project properties
+;            can be modified through project window dialogs.
+Project_Version = 6
+Project_DefaultLib = rv32.work
+Project_SortMethod = unused
+Project_Files_Count = 6
+Project_File_0 = /home/chuser/work/fiverr/itecgo/chisel-rv32/src/main/sv/rtl/blockram.sv
+Project_File_P_0 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 last_compile 1601716411 vlog_noload 0 cover_branch 0 folder {Top Level} vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to rv32.work vlog_upper 0 cover_noshort 0 compile_order 2 dont_compile 0 cover_expr 0 cover_stmt 0
+Project_File_1 = /home/chuser/work/fiverr/itecgo/chisel-rv32/src/main/sv/rtl/ram.sv
+Project_File_P_1 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 cover_branch 0 vlog_noload 0 last_compile 1601707422 folder {Top Level} cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to rv32.work vlog_options {} compile_order 3 cover_expr 0 dont_compile 0 cover_stmt 0
+Project_File_2 = /home/chuser/work/fiverr/itecgo/chisel-rv32/sim/cpubench.sv
+Project_File_P_2 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 last_compile 1601717052 vlog_noload 0 cover_branch 0 folder {Top Level} vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to rv32.work vlog_upper 0 cover_noshort 0 compile_order 5 dont_compile 0 cover_expr 0 cover_stmt 0
+Project_File_3 = /home/chuser/work/fiverr/itecgo/chisel-rv32/src/main/sv/intf/axi4.sv
+Project_File_P_3 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 cover_branch 0 vlog_noload 0 last_compile 1601706506 folder {Top Level} cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to rv32.work vlog_options {} compile_order 0 cover_expr 0 dont_compile 0 cover_stmt 0
+Project_File_4 = /home/chuser/work/fiverr/itecgo/chisel-rv32/sim/Cpu.v
+Project_File_P_4 = cover_toggle 0 vlog_protect 0 file_type verilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat 0 vlog_nodebug 0 cover_fsm 0 cover_branch 0 vlog_noload 0 last_compile 1601715815 folder {Top Level} cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to rv32.work vlog_options {} compile_order 4 cover_expr 0 dont_compile 0 cover_stmt 0
+Project_File_5 = /home/chuser/work/fiverr/itecgo/chisel-rv32/src/main/sv/intf/axi.sv
+Project_File_P_5 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 cover_branch 0 vlog_noload 0 last_compile 1601706813 folder {Top Level} cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to rv32.work vlog_options {} compile_order 1 cover_expr 0 dont_compile 0 cover_stmt 0
+Project_Sim_Count = 0
+Project_Folder_Count = 0
+Echo_Compile_Output = 0
+Save_Compile_Report = 1
+Project_Opt_Count = 0
+ForceSoftPaths = 0
+ProjectStatusDelay = 5000
+VERILOG_DoubleClick = Edit
+VERILOG_CustomDoubleClick = 
+SYSTEMVERILOG_DoubleClick = Edit
+SYSTEMVERILOG_CustomDoubleClick = 
+VHDL_DoubleClick = Edit
+VHDL_CustomDoubleClick = 
+PSL_DoubleClick = Edit
+PSL_CustomDoubleClick = 
+TEXT_DoubleClick = Edit
+TEXT_CustomDoubleClick = 
+SYSTEMC_DoubleClick = Edit
+SYSTEMC_CustomDoubleClick = 
+TCL_DoubleClick = Edit
+TCL_CustomDoubleClick = 
+MACRO_DoubleClick = Edit
+MACRO_CustomDoubleClick = 
+VCD_DoubleClick = Edit
+VCD_CustomDoubleClick = 
+SDF_DoubleClick = Edit
+SDF_CustomDoubleClick = 
+XML_DoubleClick = Edit
+XML_CustomDoubleClick = 
+LOGFILE_DoubleClick = Edit
+LOGFILE_CustomDoubleClick = 
+UCDB_DoubleClick = Edit
+UCDB_CustomDoubleClick = 
+TDB_DoubleClick = Edit
+TDB_CustomDoubleClick = 
+UPF_DoubleClick = Edit
+UPF_CustomDoubleClick = 
+PCF_DoubleClick = Edit
+PCF_CustomDoubleClick = 
+PROJECT_DoubleClick = Edit
+PROJECT_CustomDoubleClick = 
+VRM_DoubleClick = Edit
+VRM_CustomDoubleClick = 
+DEBUGDATABASE_DoubleClick = Edit
+DEBUGDATABASE_CustomDoubleClick = 
+DEBUGARCHIVE_DoubleClick = Edit
+DEBUGARCHIVE_CustomDoubleClick = 
+Project_Major_Version = 10
+Project_Minor_Version = 4

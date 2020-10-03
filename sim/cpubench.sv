@@ -3,11 +3,11 @@
  */
 
 `ifndef TEXT_FILE
-    `define TEXT_FILE "src/testbench.text.mem"
+    `define TEXT_FILE "testbench.text.mem"
 `endif
 
 `ifndef DATA_FILE
-    `define DATA_FILE "src/testbench.data.mem"
+    `define DATA_FILE "testbench.data.mem"
 `endif
 
 module cpubench;
