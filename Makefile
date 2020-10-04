@@ -1,4 +1,6 @@
-DIRS = sim
+DIRS = src/main/cc sim
+
+all: sim/Cpu.v test
 
 sim/Cpu.v: src/main/scala/rv32/*.scala
 	sbt 'run sim'
