@@ -9,6 +9,8 @@
  *
  * A package for ARM AMBA AXI4 definitions.
  */
+`default_nettype none
+
 package axi4;
 
     /* typedef enum logic [2:0] {

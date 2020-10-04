@@ -4,7 +4,9 @@ CC	= $(PREFIX)gcc
 COPTS = -march=rv32i -mabi=ilp32 -g
 LD	= $(PREFIX)ld
 OBJCOPY = $(PREFIX)objcopy
+OBJDUMP = $(PREFIX)objdump
 OD      ?= od
+LD_SRC  = core.ld
 
 KTEXT   ?= 0x000
 ENTRY   ?= 0x040
@@ -16,9 +18,9 @@ BSS     ?= 0x800
 
 #PATH := $(RISCV)/bin:$(PATH)
 
-all: $(PROJSIM)/boot.mem
+all: $(PROJSIM)/boot.mem boot.dis
 
-test: $(PROJSIM)/testbench.text.mem $(PROJSIM)/testbench.data.mem
+test: $(PROJSIM)/testbench.text.mem $(PROJSIM)/testbench.data.mem testbench.dis
 
 %.text.bin: %.elf
 	$(OBJCOPY) -O binary -j .vector -j .loader -j .text $< $@
@@ -27,16 +29,19 @@ test: $(PROJSIM)/testbench.text.mem $(PROJSIM)/testbench.data.mem
 	$(OBJCOPY) -O binary -j .data -j .bss $< $@
 
 %.elf: %.c crt0.S
-	$(CC) $(COPTS) -T core.ld -nostdlib -nostartfiles -o $@ $^
+	$(CC) $(COPTS) -T $(LD_SRC) -nostdlib -nostartfiles -o $@ $^
 
 %.o: %.S
 	$(CC) $(COPTS) -c -o $@ $^
 
 %.elf: %.o
-	$(CC) $(COPTS) -T core.ld -nostdlib -nostartfiles -o $@ $^
+	$(CC) $(COPTS) -T $(LD_SRC) -nostdlib -nostartfiles -o $@ $^
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
+
+%.dis: %.elf
+	$(OBJDUMP) -xdS $< > $@
 
 $(PROJSIM)/%.mem: %.bin
 	$(OD) -An -tx4 -w4 -v $< > $@

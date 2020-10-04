@@ -175,6 +175,7 @@ class Decode extends Module {
     ex.ctrl.fn := ctrl.fn
     ex.ctrl.br := ctrl.br
     ex.data.pc := pc
+    ex.data.ir := ir
     ex.data.op1:= op1
     ex.data.op2:= op2
     ex.data.rs1:= rs1

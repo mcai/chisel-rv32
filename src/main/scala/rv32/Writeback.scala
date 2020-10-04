@@ -8,6 +8,9 @@ class Writeback extends Module {
     val rd_load = Output(Bool())
     val rd_addr = Output(UInt(5.W))
     val rd_data = Output(UInt(32.W))
+    val wb_valid = Output(Bool())
+    val wb_pc = Output(UInt(32.W))
+    val wb_inst = Output(UInt(32.W))
     val source = Flipped(Irrevocable(new WbT))
   })
 
@@ -16,4 +19,7 @@ class Writeback extends Module {
   io.rd_addr := wb.data.rd.addr
   io.rd_data := wb.data.rd.data
   io.source.ready := true.B
+  io.wb_valid := io.source.valid
+  io.wb_pc := wb.data.pc
+  io.wb_inst := wb.data.ir.inst
 }

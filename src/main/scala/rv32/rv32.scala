@@ -3,6 +3,16 @@ package rv32
 import chisel3._
 import chisel3.util._
 
+object rv32 {
+  def RESET_ADDR= "h00000000".U(32.W)
+  def TRAP_ADDR = "h00000004".U(32.W)
+  def CODE_BASE = "h00000000".U(32.W)
+  def CODE_SIZE = "h00010000".U(32.W)
+  def DATA_BASE = "h00010000".U(32.W)
+  def DATA_SIZE = "h00010000".U(32.W)
+  def MMIO_BASE = "h80000000".U(32.W)
+}
+
 object opcode_t {
   def LOAD      = "b0000011".U(7.W)
   def LOAD_FP   = "b0000111".U(7.W)
@@ -59,16 +69,6 @@ object funct3_t {
   def AND   = "b111".U(3.W)
 }
 
-object rv32 {
-  def RESET_ADDR= "h00000000".U(32.W)
-  def TRAP_ADDR = "h00000004".U(32.W)
-  def CODE_BASE = "h00000400".U(32.W)
-  def CODE_SIZE = "h00000C00".U(32.W)
-  def DATA_BASE = "h00001000".U(32.W)
-  def DATA_SIZE = "h00001000".U(32.W)
-  def MMIO_BASE = "h00400000".U(32.W)
-}
-
 class Inst extends Bundle {
   val inst = UInt(32.W)
 
@@ -119,18 +119,18 @@ class Inst extends Bundle {
 }
 
 object op_t {
-  def NONE                = "h0".U(4.W)
-  def INTEGER             = "h1".U(4.W)
-  def BRANCH              = "h2".U(4.W)
-  def JUMP                = "h3".U(4.W)
-  def LOAD_WORD           = "h4".U(4.W)
-  def LOAD_HALF           = "h5".U(4.W)
-  def LOAD_BYTE           = "h6".U(4.W)
-  def LOAD_HALF_UNSIGNED  = "h7".U(4.W)
-  def LOAD_BYTE_UNSIGNED  = "h8".U(4.W)
-  def STORE_WORD          = "h9".U(4.W)
-  def STORE_HALF          = "hA".U(4.W)
-  def STORE_BYTE          = "hB".U(4.W)
+  def NONE                = 0x0.U(4.W)
+  def INTEGER             = 0x1.U(4.W)
+  def BRANCH              = 0x2.U(4.W)
+  def JUMP                = 0x3.U(4.W)
+  def LOAD_WORD           = 0x4.U(4.W)
+  def LOAD_HALF           = 0x5.U(4.W)
+  def LOAD_BYTE           = 0x6.U(4.W)
+  def LOAD_HALF_UNSIGNED  = 0x7.U(4.W)
+  def LOAD_BYTE_UNSIGNED  = 0x8.U(4.W)
+  def STORE_WORD          = 0x9.U(4.W)
+  def STORE_HALF          = 0xA.U(4.W)
+  def STORE_BYTE          = 0xB.U(4.W)
 }
 
 object fn_t {
@@ -161,9 +161,9 @@ object br_t {
 }
 
 object pc_t {
-  def NEXT = "h0".U(2.W)
-  def ADDR = "h1".U(2.W)
-  def TRAP = "h2".U(2.W)
+  def NEXT = 0.U(2.W)
+  def ADDR = 1.U(2.W)
+  def TRAP = 2.U(2.W)
 }
 
 object op1_t {
@@ -183,10 +183,10 @@ object op2_t {
 }
 
 object rs_t {
-  def REG = "h0".U(2.W)
-  def ALU = "h1".U(2.W)
-  def EXE = "h2".U(2.W)
-  def MEM = "h3".U(2.W)
+  def REG = 0.U(2.W)
+  def ALU = 1.U(2.W)
+  def EXE = 2.U(2.W)
+  def MEM = 3.U(2.W)
 }
 
 class CtrlT extends Bundle {
@@ -210,6 +210,7 @@ class ExT extends Bundle {
   }
   val data = new Bundle {
     val pc = UInt(32.W)
+    val ir = new Inst
     val op1 = UInt(32.W)
     val op2 = UInt(32.W)
     val rs1 = UInt(32.W)
@@ -224,6 +225,8 @@ class MmT extends Bundle {
     val br = UInt(3.W)
   }
   val data = new Bundle {
+    val pc = UInt(32.W)
+    val ir = new Inst
     val alu = UInt(32.W)
     val rs2 = UInt(32.W)
     val rd = UInt(5.W)
@@ -235,6 +238,8 @@ class WbT extends Bundle {
     val op = UInt(4.W)
   }
   val data = new Bundle {
+    val pc = UInt(32.W)
+    val ir = new Inst
     val rd = new Bundle {
       val data = UInt(32.W)
       val addr = UInt(5.W)

@@ -9,6 +9,9 @@ class Cpu extends Module {
     val code = new Axi
     val data = new Axi
     val mmio = new Axi
+    val wb_valid = Output(Bool())
+    val wb_pc = Output(UInt(32.W))
+    val wb_inst = Output(UInt(32.W))
   })
 
   val x_hazard    = Module(new Hazard)
@@ -93,6 +96,9 @@ class Cpu extends Module {
   wb <> x_memory.io.sink
 
   x_writeback.io.source <> wb
+  io.wb_valid := x_writeback.io.wb_valid
+  io.wb_pc := x_writeback.io.wb_pc
+  io.wb_inst := x_writeback.io.wb_inst
 
   io.data <> x_arbitrate.io.data
   io.mmio <> x_arbitrate.io.mmio

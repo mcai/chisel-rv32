@@ -66,19 +66,20 @@ class Memory extends Module {
   val read = isload(mm.ctrl.op) & io.source.valid & io.source.ready
   val reading = RegInit(false.B)
   when(reading) {
-    when(io.cache.r.valid & io.cache.r.ready) { reading := false.B }
+    when(io.cache.r.fire()) { reading := false.B }
   }.elsewhen(read) {reading := true.B}
 
-  io.cache.ar.bits.prot := Axi4.AXI4
   val arvalid = RegInit(false.B)
-  io.cache.ar.valid := arvalid
   when(read) { arvalid := true.B }
-  .elsewhen(io.cache.ar.valid & io.cache.ar.ready) { arvalid := false.B }
+  .elsewhen(io.cache.ar.fire()) { arvalid := false.B }
 
   val araddr = RegEnable(mm.data.alu, read & ~(io.cache.ar.valid & ~io.cache.ar.ready))
   val op     = RegEnable(mm.ctrl.op,  read & ~(io.cache.ar.valid & ~io.cache.ar.ready))
   val rd     = RegEnable(mm.data.rd,  read & ~(io.cache.ar.valid & ~io.cache.ar.ready))
+
+  io.cache.ar.bits.prot := Axi4.AXI4
   io.cache.ar.bits.addr := araddr
+  io.cache.ar.valid := arvalid
 
   io.cache.r.ready := io.sink.ready
 
@@ -124,6 +125,8 @@ class Memory extends Module {
 
   when (io.sink.ready) {
     wb.ctrl.op := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.bits.resp === 0.U(2.W)), op, mm.ctrl.op)
+    wb.data.pc := mm.data.pc
+    wb.data.ir := mm.data.ir
     wb.data.rd.data := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.bits.resp === 0.U(2.W)), rdata, mm.data.alu)
     wb.data.rd.addr := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.bits.resp === 0.U(2.W)), rd, mm.data.rd)
   }

@@ -34,7 +34,7 @@ SECTIONS
     PROVIDE(etext = .);
     _etext = .;
 
-    . = 0x1000;
+    . = 0x10000;
     _fdata = .;
 
     .data :
@@ -59,7 +59,8 @@ SECTIONS
     PROVIDE(end = .);
     _end = ALIGN(4);
 
-    _stack = 0x2000;
-    _gpio = 0x400000;
-    _uart = 0x401000;
+    _stack = 0x20000;
+    _uart  = 0x80000000;
+    _timer = 0x80001000;
+    _gpio  = 0x80002000;
 }

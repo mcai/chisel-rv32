@@ -24,7 +24,7 @@ interface axi #(
     typedef logic [STRB_WIDTH-1:0] strb_t;
 
     // Write address channel
-    addr_t awaddr = '0;
+    addr_t awaddr;
     prot_t awprot;
     logic  awvalid;
     logic  awready;
@@ -109,68 +109,5 @@ interface axi #(
         output rvalid,
         input  rready
     );
-
-`ifndef VERILATOR
-
-    task automatic timeout(
-        input string msg = "timeout",
-        input int unsigned arg = 100
-    );
-        #arg $fatal(1, msg);
-    endtask
-
-    task automatic write(
-        input addr_t addr,
-        input data_t data,
-        input strb_t strb = {STRB_WIDTH{1'b1}},
-        input prot_t prot = '0
-    );
-        axi.master.awaddr  <= addr;
-        axi.master.awprot  <= prot;
-        axi.master.awvalid <= 1'b1;
-        axi.master.wdata   <= data;
-        axi.master.wstrb   <= strb;
-        axi.master.wvalid  <= 1'b1;
-
-        fork
-            timeout("write timeout");
-            wait(axi.master.bvalid & axi.master.bready) @(posedge aclk) axi.master.bready <= 1'b0;
-        join_none
-
-        fork
-            wait(axi.master.awready) @(posedge aclk) axi.master.awvalid <= 1'b0;
-            wait(axi.master.wready) @(posedge aclk) axi.master.wvalid <= 1'b0;
-        join
-
-        axi.master.bready <= 1'b1;
-
-        disable timeout;
-    endtask : write
-
-    task automatic read(
-        input  addr_t addr,
-        output data_t data
-     );
-        axi.master.araddr <= addr;
-        axi.master.arprot <= '0;
-        axi.master.arvalid <= 1'b1;
-        axi.master.rready <= 1'b1;
-
-        fork
-            timeout("read timeout");
-        join_none
-
-        wait(axi.master.arready) @(posedge aclk) axi.master.arvalid <= 1'b0;
-
-        fork
-            wait(axi.master.rvalid) @(posedge aclk) axi.master.rready <= 1'b0;
-            wait(axi.master.rvalid) @(posedge aclk) data = axi.master.rdata;
-        join
-
-
-        disable timeout;
-    endtask : read
-
-`endif
 
 endinterface : axi

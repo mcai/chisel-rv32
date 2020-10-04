@@ -50,6 +50,8 @@ class Execute extends Module {
   when(io.sink.ready) {
     mm.ctrl.op := ex.ctrl.op
     mm.ctrl.br := ex.ctrl.br
+    mm.data.pc := ex.data.pc
+    mm.data.ir := ex.data.ir
     mm.data.rd := ex.data.rd
     mm.data.alu := Mux(jmp, ex.data.pc + 4.U, out)
     mm.data.rs2 := ex.data.rs2
