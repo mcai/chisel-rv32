@@ -20,5 +20,5 @@ INIT = testbench.text.mem testbench.data.mem
 include vivado.mk
 
 clean:
-	$(RM) -rf Cpu.* *.mem *.log *.jou *.pb *.vcd *.wdb *.str xsim.dir .Xil
+	$(RM) -rf Cpu.* *.mem *.dis *.log *.jou *.pb *.vcd *.wdb *.str xsim.dir .Xil
 

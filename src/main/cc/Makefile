@@ -18,9 +18,9 @@ BSS     ?= 0x800
 
 #PATH := $(RISCV)/bin:$(PATH)
 
-all: $(PROJSIM)/boot.mem boot.dis
+all: $(PROJSIM)/boot.mem $(PROJSIM)/boot.dis
 
-test: $(PROJSIM)/testbench.text.mem $(PROJSIM)/testbench.data.mem testbench.dis
+test: $(PROJSIM)/testbench.text.mem $(PROJSIM)/testbench.data.mem $(PROJSIM)/testbench.dis
 
 %.text.bin: %.elf
 	$(OBJCOPY) -O binary -j .vector -j .loader -j .text $< $@
@@ -40,14 +40,14 @@ test: $(PROJSIM)/testbench.text.mem $(PROJSIM)/testbench.data.mem testbench.dis
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
-%.dis: %.elf
+$(PROJSIM)/%.dis: %.elf
 	$(OBJDUMP) -xdS $< > $@
 
 $(PROJSIM)/%.mem: %.bin
 	$(OD) -An -tx4 -w4 -v $< > $@
 
 clean:
-	$(RM) *.elf *.bin *.mem *.o
+	$(RM) *.elf *.bin *.mem *.o *.dis
 
 .PHONY: all clean
 
