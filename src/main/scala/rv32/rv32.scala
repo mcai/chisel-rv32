@@ -238,13 +238,28 @@ class WbT extends Bundle {
     val op = UInt(4.W)
   }
   val data = new Bundle {
-    val pc = UInt(32.W)
-    val ir = new Inst
     val rd = new Bundle {
       val data = UInt(32.W)
       val addr = UInt(5.W)
     }
   }
+  val debug = new Bundle {
+    val pc = UInt(32.W)
+    val ir = new Inst
+    val alu = UInt(32.W)
+    val wdata = UInt(32.W)
+  }
+}
+
+class RetireT extends Bundle {
+  val pc = UInt(32.W)
+  val inst = UInt(32.W)
+  val load = UInt(2.W)
+  val store = UInt(2.W)
+  val ldst_addr = UInt(32.W)
+  val store_data = UInt(32.W)
+  val rd_sel = UInt(5.W)
+  val rd_data = UInt(32.W)
 }
 
 object isload {

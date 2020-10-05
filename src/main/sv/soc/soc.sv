@@ -19,6 +19,16 @@ wire reset = ~rst_n;
 logic irq, uart_irq;
 logic [TIMER_CNT*2-1:0] timer_irq;
 
+wire        io_retire_valid;
+wire [31:0] io_retire_pc;
+wire [31:0] io_retire_inst;
+wire [1:0]  io_retire_load;
+wire [1:0]  io_retire_store;
+wire [31:0] io_retire_ldst_addr;
+wire [31:0] io_retire_store_data;
+wire [4:0]  io_retire_rd_sel;
+wire [31:0] io_retire_rd_data;
+
 axi code (.*);
 axi data (.*);
 axi mmio (.*);
@@ -89,9 +99,15 @@ Cpu x_cpu (
   .io_mmio_r_valid(mmio.rvalid),
   .io_mmio_r_bits_data(mmio.rdata),
   .io_mmio_r_bits_resp(mmio.rresp),
-  .io_wb_valid(),
-  .io_wb_pc(),
-  .io_wb_inst()
+  .io_retire_valid(io_retire_valid),
+  .io_retire_bits_pc(io_retire_pc),
+  .io_retire_bits_inst(io_retire_inst),
+  .io_retire_bits_load(io_retire_load),
+  .io_retire_bits_store(io_retire_store),
+  .io_retire_bits_ldst_addr(io_retire_ldst_addr),
+  .io_retire_bits_store_data(io_retire_store_data),
+  .io_retire_bits_rd_sel(io_retire_rd_sel),
+  .io_retire_bits_rd_data(io_retire_rd_data)
 );
 
 axi2apb #(.SLV_NUM(APB_SLV_CNT)) x_x2p (

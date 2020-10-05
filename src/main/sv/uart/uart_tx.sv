@@ -87,7 +87,7 @@ module uart_tx (
                 tx_o = 1'b0;
                 parity_bit_next = 1'b0;
                 baudgen_en = 1'b1;
-                if (bit_done)
+                if (bit_done|cfg_div_i=='0)
                     NS = DATA;
             end
 

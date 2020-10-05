@@ -71,50 +71,31 @@ module cpubench;
   logic [3:0] tb_uart_rxst;
   integer cursor;
 
-  always @(posedge clk) begin: TB_UART_RX
+  always @(posedge clk) begin
     if (!rst_n) begin
-      tb_uart_rxst <= '0;
-      cursor <= 255;
+      tb_uart_rxst <= 0;
+      cursor <= 0;
       line <= '0;
     end else case(tb_uart_rxst)
-      4'h0: if (!uart_tx) begin
-        tb_uart_rxst <= 4'h1;
+      0: if (!uart_tx) begin
+        tb_uart_rxst <= 1;
         ch <= 0;
       end
-      4'h9: begin
-        tb_uart_rxst <= 4'h0;
+      9: begin
+        tb_uart_rxst <= 0;
         line[cursor*8+:8] <= ch;
-        cursor <= cursor-1;
+        cursor <= cursor+1;
         if (ch == 8'h0A) begin
-          $write("[%tns]UART: %s\n", $time, line);
-          cursor <= 255;
+          $write("\n%s\n", line);
+          cursor <= 0;
           line <= '0;
         end
       end
       default: begin
-        tb_uart_rxst <= tb_uart_rxst + 4'h1;
-        ch <= {uart_tx, ch[7:1]};
+        tb_uart_rxst <= tb_uart_rxst + 1;
+        ch <= {ch[6:0], uart_tx};
       end
     endcase
-  end
-
-  always @(posedge clk) begin: CPU_MONITOR
-    if (x_dut.io_retire_valid) begin
-      $write("[%tns] pc:%h, ins:%h, ", $time, x_dut.io_retire_pc, x_dut.io_retire_inst);
-      if (|x_dut.io_retire_store)
-        $write("[%h]%s <- %h\n",
-            x_dut.io_retire_ldst_addr,
-            x_dut.io_retire_store==2'h3 ? "w":x_dut.io_retire_store==2'h2 ? "h":"b",
-            x_dut.io_retire_store_data);
-      else if (|x_dut.io_retire_load)
-        $write("x%d <- %h[%h]%s\n",
-            x_dut.io_retire_rd_sel,
-            x_dut.io_retire_rd_data,
-            x_dut.io_retire_ldst_addr,
-            x_dut.io_retire_load==2'h3 ? "w":x_dut.io_retire_load==2'h2 ? "h":"b");
-      else
-        $write("x%d <- %h\n", x_dut.io_retire_rd_sel, x_dut.io_retire_rd_data);
-    end
   end
 
 endmodule: cpubench

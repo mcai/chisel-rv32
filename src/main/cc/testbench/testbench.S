@@ -57,6 +57,11 @@ _start:
     nop
     add t2,t0,t1
 
+    # Test timer
+    la   t0,_timer
+    li   t1,1
+    sw   t1,4(t0)
+
     # Test store and load
     la   t0,_fdata
     li   t1,1
@@ -64,21 +69,13 @@ _start:
     lw   t2,0(t0)
     andi t3,t2,2
 
-    # Test timer
-    la   t0,_timer
-    li   t1,1
-    sw   t1,4(t0)
-
     # test UART.SCR
     la   t0,_uart
     li   t1,0xA5
     sb   t1,7(t0)
-    nop
-    nop
-    nop
-    li   t1,0
-    lb   t1,7(t0)
-
+    # set 8n1
+    li   t1,0x3
+    sb   t1,3(t0)
     // send byte
     li   t2,'h'
     sb   t2,0(t0)
@@ -90,7 +87,12 @@ _start:
     sb   t2,0(t0)
     li   t2,'o'
     sb   t2,0(t0)
-
+    li   t2,'\n'
+    sb   t2,0(t0)
+    // wait print
+    li   t1,10
+l1: addi t1,t1,-1
+    bne  t1,x0,l1
     // finish
     li   t2,0xFF
     sb   t2,7(t0)

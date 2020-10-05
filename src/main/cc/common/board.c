@@ -1,182 +1,124 @@
-// See LICENSE for license details.
+#include "board.h"
 
-#include <stdint.h>
-#include <string.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <limits.h>
-#include <sys/signal.h>
-#include "util.h"
+#define UART_BASE       0x80000000
+#define UART_THR        0
+#define UART_RDR        0
+#define UART_DLL        0
+#define UART_DLH        1
+#define UART_IER        1
+#define UART_IIR        2
+#define UART_FCR        2
+#define UART_LCR        3
+#define UART_MDC        4
+#define UART_LSR        5
+#define UART_MSR        6
+#define UART_SCR        7
+#define LCR_DLAB        0x80
+#define UART_REG(R)     ((UART_BASE)+(UART##X))
 
-#define SYS_write 64
+#define TIMER_NUM       2
+#define TIMER_BASE      0x80001000
+#define TIMER_VALUE     0
+#define TIMER_CONTROL   4
+#define TIMER_COMPARE   8
+#define TIMER_REG(X,R)  ((TIMER_BASE)+0x10*(X)+(TIMER##R))
 
-#undef strcmp
+#define GPIO_BASE       0x80002000
 
-extern volatile uint64_t tohost;
-extern volatile uint64_t fromhost;
-
-static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2)
-{
-  volatile uint64_t magic_mem[8] __attribute__((aligned(64)));
-  magic_mem[0] = which;
-  magic_mem[1] = arg0;
-  magic_mem[2] = arg1;
-  magic_mem[3] = arg2;
-  __sync_synchronize();
-
-  tohost = (uintptr_t)magic_mem;
-  while (fromhost == 0)
-    ;
-  fromhost = 0;
-
-  __sync_synchronize();
-  return magic_mem[0];
+inline void WR_8(uint32_t addr, uint8_t data) {
+  *(volatile uint8_t *)addr = data;
 }
 
-#define NUM_COUNTERS 2
-static uintptr_t counters[NUM_COUNTERS];
-static char* counter_names[NUM_COUNTERS];
-
-void setStats(int enable)
-{
-  int i = 0;
-#define READ_CTR(name) do { \
-    while (i >= NUM_COUNTERS) ; \
-    uintptr_t csr = read_csr(name); \
-    if (!enable) { csr -= counters[i]; counter_names[i] = #name; } \
-    counters[i++] = csr; \
-  } while (0)
-
-  READ_CTR(mcycle);
-  READ_CTR(minstret);
-
-#undef READ_CTR
+inline uint8_t RD_8(uint32_t addr) {
+  return *((volatile uint8_t *)addr);
 }
 
-void __attribute__((noreturn)) tohost_exit(uintptr_t code)
-{
-  tohost = (code << 1) | 1;
-  while (1);
+inline void WR32(uint32_t addr, uint32_t data) {
+  *(volatile uint8_t *)addr = data;
 }
 
-uintptr_t __attribute__((weak)) handle_trap(uintptr_t cause, uintptr_t epc, uintptr_t regs[32])
-{
-  tohost_exit(1337);
+inline uint32_t RD32(uint32_t addr) {
+  return *((volatile uint32_t *)addr);
 }
 
-void exit(int code)
-{
-  tohost_exit(code);
+inline void timer_set(int t, uint32_t value) {
+  WR32(TIMER(t,VALUE), value);
 }
 
-void abort()
-{
-  exit(128 + SIGABRT);
+inline uint32_t timer_get(int t) {
+  return (uint32_t)RD32(TIMER(t,VALUE))
 }
 
-void printstr(const char* s)
-{
-  syscall(SYS_write, 1, (uintptr_t)s, strlen(s));
+inline void timer_start(int t) {
+  WR32(TIMER(t,CONTROL), 1)
 }
 
-void __attribute__((weak)) thread_entry(int cid, int nc)
-{
-  // multi-threaded programs override this function.
-  // for the case of single-threaded programs, only let core 0 proceed.
-  while (cid != 0);
+inline void timer_stop(int t) {
+  WR32(TIMER(t,CONTROL), 0)
 }
 
-int __attribute__((weak)) main(int argc, char** argv)
-{
-  // single-threaded programs override this function.
-  printstr("Implement main(), foo!\n");
-  return -1;
+inline void stop_simulation() {
+  WR_8(UART_REG(SCR), 0xFF);
 }
 
-static void init_tls()
-{
-  register void* thread_pointer asm("tp");
-  extern char _tls_data;
-  extern __thread char _tdata_begin, _tdata_end, _tbss_end;
-  size_t tdata_size = &_tdata_end - &_tdata_begin;
-  memcpy(thread_pointer, &_tls_data, tdata_size);
-  size_t tbss_size = &_tbss_end - &_tdata_end;
-  memset(thread_pointer + tdata_size, 0, tbss_size);
+void uart_init(uint32_t sys_freq, int baud_rate, uint8_t async_fmt) {
+  uint32_t divisor, tmp;
+  /* The formula for calculating these baud rate divisors is:
+   *   baud rate = (Fbase) / (16 * (divisor+(fdivisor/16))
+   */
+  divisor = (sys_clk_freq / baud_rate) >> 4;
+  WR_8(UART_REG(LCR), LCR_DLAB);
+  WR_8(UART_REG(DLL), (uint8_t)(divisor & 0xff));
+  WR_8(UART_REG(DLH), (uint8_t)((divisor >> 8) & 0xff));
+  WR_8(UART_REG(LCR), async_fmt);
 }
 
-void _init(int cid, int nc)
-{
-  init_tls();
-  thread_entry(cid, nc);
-
-  // only single-threaded programs should ever get here.
-  int ret = main(0, 0);
-
-  char buf[NUM_COUNTERS * 32] __attribute__((aligned(64)));
-  char* pbuf = buf;
-  for (int i = 0; i < NUM_COUNTERS; i++)
-    if (counters[i])
-      pbuf += sprintf(pbuf, "%s = %d\n", counter_names[i], counters[i]);
-  if (pbuf != buf)
-    printstr(buf);
-
-  exit(ret);
+uint8_t uart_poll_out(uint8_t ch) {
+  while((RD_8(LSR) & LSR_THRE) == 0);
+  WR_8(THR, ch);
+  return ch;
 }
 
-#undef putchar
-int putchar(int ch)
-{
-  static __thread char buf[64] __attribute__((aligned(64)));
-  static __thread int buflen = 0;
-
-  buf[buflen++] = ch;
-
-  if (ch == '\n' || buflen == sizeof(buf))
-  {
-    syscall(SYS_write, 1, (uintptr_t)buf, buflen);
-    buflen = 0;
-  }
-
-  return 0;
+inline uint8_t putchar(uint8_t ch) {
+  return uart_poll_out(ch);
 }
 
-void printhex(uint64_t x)
-{
-  char str[17];
+void printstr(const char* s) {
+  char* p = s;
+  while (*p) putchar(*p++);
+}
+
+void printhex(uint32_t x) {
   int i;
-  for (i = 0; i < 16; i++)
-  {
-    str[15-i] = (x & 0xF) + ((x & 0xF) < 10 ? '0' : 'a'-10);
-    x >>= 4;
+  for (i = 0; i < 8; i++) {
+    putchar(((x & (0xFu<<8))>>8) < 10u ? '0' : 'a'-10);
+    x <<= 4;
   }
-  str[16] = 0;
-
-  printstr(str);
 }
 
-static inline void printnum(void (*putch)(int, void**), void **putdat,
-                    unsigned long long num, unsigned base, int width, int padc)
-{
+static inline void printnum (
+    void (*putch)(int, void**),
+    void **putdat,
+    unsigned long long num,
+    unsigned base,
+    int width,
+    int padc
+) {
   unsigned digs[sizeof(num)*CHAR_BIT];
   int pos = 0;
 
-  while (1)
-  {
+  while (1) {
     digs[pos++] = num % base;
-    if (num < base)
-      break;
+    if (num < base) break;
     num /= base;
   }
 
-  while (width-- > pos)
-    putch(padc, putdat);
+  while (width-- > pos) putch(padc, putdat);
 
-  while (pos-- > 0)
-    putch(digs[pos] + (digs[pos] >= 10 ? 'a' - 10 : '0'), putdat);
+  while (pos-- > 0) putch(digs[pos] + (digs[pos] >= 10 ? 'a' - 10 : '0'), putdat);
 }
 
-static unsigned long long getuint(va_list *ap, int lflag)
-{
+static unsigned long long getuint(va_list *ap, int lflag) {
   if (lflag >= 2)
     return va_arg(*ap, unsigned long long);
   else if (lflag)
@@ -185,8 +127,7 @@ static unsigned long long getuint(va_list *ap, int lflag)
     return va_arg(*ap, unsigned int);
 }
 
-static long long getint(va_list *ap, int lflag)
-{
+static long long getint(va_list *ap, int lflag) {
   if (lflag >= 2)
     return va_arg(*ap, long long);
   else if (lflag)
@@ -195,8 +136,12 @@ static long long getint(va_list *ap, int lflag)
     return va_arg(*ap, int);
 }
 
-static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt, va_list ap)
-{
+static void vprintfmt(
+    void (*putch)(int, void**),
+    void **putdat,
+    const char *fmt,
+    va_list ap
+) {
   register const char* p;
   const char* last_fmt;
   register int ch, err;
@@ -206,8 +151,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
 
   while (1) {
     while ((ch = *(unsigned char *) fmt) != '%') {
-      if (ch == '\0')
-        return;
+      if (ch == '\0') return;
       fmt++;
       putch(ch, putdat);
     }
@@ -227,7 +171,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
     case '-':
       padc = '-';
       goto reswitch;
-      
+
     // flag to pad with 0's instead of spaces
     case '0':
       padc = '0';
@@ -336,7 +280,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
     case '%':
       putch(ch, putdat);
       break;
-      
+
     // unrecognized escape sequence - just print it literally
     default:
       putch('%', putdat);
@@ -346,8 +290,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
   }
 }
 
-int printf(const char* fmt, ...)
-{
+int printf(const char* fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
 
@@ -357,14 +300,12 @@ int printf(const char* fmt, ...)
   return 0; // incorrect return value, but who cares, anyway?
 }
 
-int sprintf(char* str, const char* fmt, ...)
-{
+int sprintf(char* str, const char* fmt, ...) {
   va_list ap;
   char* str0 = str;
   va_start(ap, fmt);
 
-  void sprintf_putch(int ch, void** data)
-  {
+  void sprintf_putch(int ch, void** data) {
     char** pstr = (char**)data;
     **pstr = ch;
     (*pstr)++;
@@ -377,24 +318,20 @@ int sprintf(char* str, const char* fmt, ...)
   return str - str0;
 }
 
-void* memcpy(void* dest, const void* src, size_t len)
-{
+void* memcpy(void* dest, const void* src, size_t len) {
   if ((((uintptr_t)dest | (uintptr_t)src | len) & (sizeof(uintptr_t)-1)) == 0) {
     const uintptr_t* s = src;
     uintptr_t *d = dest;
-    while (d < (uintptr_t*)(dest + len))
-      *d++ = *s++;
+    while (d < (uintptr_t*)(dest + len)) *d++ = *s++;
   } else {
     const char* s = src;
     char *d = dest;
-    while (d < (char*)(dest + len))
-      *d++ = *s++;
+    while (d < (char*)(dest + len)) *d++ = *s++;
   }
   return dest;
 }
 
-void* memset(void* dest, int byte, size_t len)
-{
+void* memset(void* dest, int byte, size_t len) {
   if ((((uintptr_t)dest | len) & (sizeof(uintptr_t)-1)) == 0) {
     uintptr_t word = byte & 0xFF;
     word |= word << 8;
@@ -402,54 +339,44 @@ void* memset(void* dest, int byte, size_t len)
     word |= word << 16 << 16;
 
     uintptr_t *d = dest;
-    while (d < (uintptr_t*)(dest + len))
-      *d++ = word;
+    while (d < (uintptr_t*)(dest + len)) *d++ = word;
   } else {
     char *d = dest;
-    while (d < (char*)(dest + len))
-      *d++ = byte;
+    while (d < (char*)(dest + len)) *d++ = byte;
   }
   return dest;
 }
 
-size_t strlen(const char *s)
-{
+size_t strlen(const char *s) {
   const char *p = s;
-  while (*p)
-    p++;
+  while (*p) p++;
   return p - s;
 }
 
-size_t strnlen(const char *s, size_t n)
-{
+size_t strnlen(const char *s, size_t n) {
   const char *p = s;
-  while (n-- && *p)
-    p++;
+  while (n-- && *p) p++;
   return p - s;
 }
 
-int strcmp(const char* s1, const char* s2)
-{
+int strcmp(const char* s1, const char* s2) {
   unsigned char c1, c2;
 
   do {
     c1 = *s1++;
     c2 = *s2++;
-  } while (c1 != 0 && c1 == c2);
+  } while (c1 != 0 && c2 != 0 && c1 == c2);
 
   return c1 - c2;
 }
 
-char* strcpy(char* dest, const char* src)
-{
+char* strcpy(char* dest, const char* src) {
   char* d = dest;
-  while ((*d++ = *src++))
-    ;
+  while ((*d++ = *src++));
   return dest;
 }
 
-long atol(const char* str)
-{
+long atol(const char* str) {
   long res = 0;
   int sign = 0;
 

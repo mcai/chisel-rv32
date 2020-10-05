@@ -125,10 +125,16 @@ class Memory extends Module {
 
   when (io.sink.ready) {
     wb.ctrl.op := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.bits.resp === 0.U(2.W)), op, mm.ctrl.op)
-    wb.data.pc := mm.data.pc
-    wb.data.ir := mm.data.ir
     wb.data.rd.data := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.bits.resp === 0.U(2.W)), rdata, mm.data.alu)
     wb.data.rd.addr := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.bits.resp === 0.U(2.W)), rd, mm.data.rd)
+    wb.debug.pc := mm.data.pc
+    wb.debug.ir := mm.data.ir
+    wb.debug.alu := mm.data.alu
+    wb.debug.wdata := Mux1H(Seq(
+      (mm.ctrl.op === op_t.STORE_WORD) -> cwdata,
+      (mm.ctrl.op === op_t.STORE_HALF) -> Cat(0.U(16.W), cwdata(15, 0)),
+      (mm.ctrl.op === op_t.STORE_WORD) -> Cat(0.U(24.W), cwdata(7, 0))
+    ))
   }
 
 }
