@@ -23,6 +23,7 @@ class Cpu extends Module {
   val x_writeback = Module(new Writeback)
 
   val id = Wire(Irrevocable(new IdT))
+  //val id_ctrl = x_decode.io.ctrl
   val ex = Wire(Irrevocable(new ExT))
   val mm = Wire(Irrevocable(new MmT))
   val wb = Wire(Irrevocable(new WbT))
@@ -57,6 +58,7 @@ class Cpu extends Module {
   x_hazard.io.writeback<> wb
 
   x_forward.io.decode   <> id
+  //x_forward.io.id_ctrl  <> id_ctrl
   x_forward.io.execute  <> ex
   x_forward.io.memory   <> mm
   x_forward.io.writeback<> wb
@@ -76,6 +78,7 @@ class Cpu extends Module {
   x_regfile.io.rd_data := rd_data
 
   x_decode.io.lock := lock
+  x_decode.io.branch := branch
   x_decode.io.rs1_sel := rs1
   x_decode.io.rs2_sel := rs2
   x_decode.io.alu_data := alu_data

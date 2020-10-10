@@ -1,30 +1,6 @@
 #include "board.h"
 
-#define UART_BASE       0x80000000
-#define UART_THR        0
-#define UART_RDR        0
-#define UART_DLL        0
-#define UART_DLH        1
-#define UART_IER        1
-#define UART_IIR        2
-#define UART_FCR        2
-#define UART_LCR        3
-#define UART_MDC        4
-#define UART_LSR        5
-#define UART_MSR        6
-#define UART_SCR        7
-#define LCR_DLAB        0x80
-#define UART_REG(R)     ((UART_BASE)+(UART##X))
-
-#define TIMER_NUM       2
-#define TIMER_BASE      0x80001000
-#define TIMER_VALUE     0
-#define TIMER_CONTROL   4
-#define TIMER_COMPARE   8
-#define TIMER_REG(X,R)  ((TIMER_BASE)+0x10*(X)+(TIMER##R))
-
-#define GPIO_BASE       0x80002000
-
+/*
 inline void WR_8(uint32_t addr, uint8_t data) {
   *(volatile uint8_t *)addr = data;
 }
@@ -42,50 +18,52 @@ inline uint32_t RD32(uint32_t addr) {
 }
 
 inline void timer_set(int t, uint32_t value) {
-  WR32(TIMER(t,VALUE), value);
+  WR32(TIMER_REG(t,VALUE), value);
 }
 
 inline uint32_t timer_get(int t) {
-  return (uint32_t)RD32(TIMER(t,VALUE))
+  return (uint32_t)RD32(TIMER_REG(t,VALUE));
 }
 
 inline void timer_start(int t) {
-  WR32(TIMER(t,CONTROL), 1)
+  WR32(TIMER_REG(t,CONTROL), 1);
 }
 
 inline void timer_stop(int t) {
-  WR32(TIMER(t,CONTROL), 0)
+  WR32(TIMER_REG(t,CONTROL), 0);
 }
 
 inline void stop_simulation() {
   WR_8(UART_REG(SCR), 0xFF);
 }
+*/
 
 void uart_init(uint32_t sys_freq, int baud_rate, uint8_t async_fmt) {
   uint32_t divisor, tmp;
   /* The formula for calculating these baud rate divisors is:
    *   baud rate = (Fbase) / (16 * (divisor+(fdivisor/16))
    */
-  divisor = (sys_clk_freq / baud_rate) >> 4;
+  divisor = (sys_freq / baud_rate) >> 4;
   WR_8(UART_REG(LCR), LCR_DLAB);
   WR_8(UART_REG(DLL), (uint8_t)(divisor & 0xff));
   WR_8(UART_REG(DLH), (uint8_t)((divisor >> 8) & 0xff));
   WR_8(UART_REG(LCR), async_fmt);
 }
 
-uint8_t uart_poll_out(uint8_t ch) {
-  while((RD_8(LSR) & LSR_THRE) == 0);
-  WR_8(THR, ch);
-  return ch;
-}
-
-inline uint8_t putchar(uint8_t ch) {
-  return uart_poll_out(ch);
+int putchar(int c) {
+  while((RD_8(UART_REG(LSR)) & LSR_THRE) == 0);
+  WR_8(UART_REG(THR), c&0xFF);
+  return c;
 }
 
 void printstr(const char* s) {
-  char* p = s;
-  while (*p) putchar(*p++);
+  int i = 0;
+  while (s[i]) putchar(s[i++]);
+}
+
+int puts(const char* s) {
+  printstr(s);
+  putchar('\n');
 }
 
 void printhex(uint32_t x) {
@@ -96,7 +74,7 @@ void printhex(uint32_t x) {
   }
 }
 
-static inline void printnum (
+static void printnum (
     void (*putch)(int, void**),
     void **putdat,
     unsigned long long num,
@@ -261,7 +239,7 @@ static void vprintfmt(
 
     // pointer
     case 'p':
-      static_assert(sizeof(long) == sizeof(void*));
+      //static_assert(sizeof(long) == sizeof(void*));
       lflag = 1;
       putch('0', putdat);
       putch('x', putdat);

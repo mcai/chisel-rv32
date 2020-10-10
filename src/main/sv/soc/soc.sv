@@ -26,8 +26,11 @@ wire [1:0]  io_retire_load;
 wire [1:0]  io_retire_store;
 wire [31:0] io_retire_ldst_addr;
 wire [31:0] io_retire_store_data;
+wire        io_retire_rd_load;
 wire [4:0]  io_retire_rd_sel;
 wire [31:0] io_retire_rd_data;
+wire        io_retire_branch;
+wire [31:0] io_retire_target;
 
 axi code (.*);
 axi data (.*);
@@ -106,8 +109,11 @@ Cpu x_cpu (
   .io_retire_bits_store(io_retire_store),
   .io_retire_bits_ldst_addr(io_retire_ldst_addr),
   .io_retire_bits_store_data(io_retire_store_data),
+  .io_retire_bits_rd_load(io_retire_rd_load),
   .io_retire_bits_rd_sel(io_retire_rd_sel),
-  .io_retire_bits_rd_data(io_retire_rd_data)
+  .io_retire_bits_rd_data(io_retire_rd_data),
+  .io_retire_bits_branch(io_retire_branch),
+  .io_retire_bits_target(io_retire_target)
 );
 
 axi2apb #(.SLV_NUM(APB_SLV_CNT)) x_x2p (

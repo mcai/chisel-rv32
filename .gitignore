@@ -353,3 +353,4 @@ sim/rv32.work
 sim/transcript
 sim/vsim.wlf
 sim/rv32.cr.mti
+sim/*.dis

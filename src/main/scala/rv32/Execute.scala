@@ -33,7 +33,7 @@ class Execute extends Module {
   val bge = ex.ctrl.op === op_t.BRANCH & ex.ctrl.br === br_t.BGE  & (eq | ~lt)
   val bgeu= ex.ctrl.op === op_t.BRANCH & ex.ctrl.br === br_t.BGEU & (eq | ~ltu)
 
-  io.branch := io.source.valid & (jmp | beq | bne | blt | bltu | bge | bgeu)
+  io.branch := io.source.fire() & (jmp | beq | bne | blt | bltu | bge | bgeu)
 
   x_alu.io.fn := ex.ctrl.fn
   x_alu.io.op1 := ex.data.op1
@@ -42,14 +42,15 @@ class Execute extends Module {
   io.source.ready := io.sink.ready
 
   val tvalid = RegInit(false.B)
-  when(io.source.valid & io.source.ready) {tvalid := true.B}
-  .elsewhen(io.sink.valid & io.sink.ready) {tvalid := false.B}
+  when(io.source.fire()) {tvalid := true.B}
+  .elsewhen(io.sink.fire()) {tvalid := false.B}
 
   io.sink.valid := tvalid
 
   when(io.sink.ready) {
     mm.ctrl.op := ex.ctrl.op
-    mm.ctrl.br := ex.ctrl.br
+    mm.ctrl.br := io.branch
+    mm.ctrl.target := io.target
     mm.data.pc := ex.data.pc
     mm.data.ir := ex.data.ir
     mm.data.rd := ex.data.rd

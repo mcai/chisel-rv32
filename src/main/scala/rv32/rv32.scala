@@ -222,7 +222,8 @@ class ExT extends Bundle {
 class MmT extends Bundle {
   val ctrl = new Bundle {
     val op = UInt(4.W)
-    val br = UInt(3.W)
+    val br = Bool()
+    val target = UInt(32.W)
   }
   val data = new Bundle {
     val pc = UInt(32.W)
@@ -248,6 +249,8 @@ class WbT extends Bundle {
     val ir = new Inst
     val alu = UInt(32.W)
     val wdata = UInt(32.W)
+    val br = Bool()
+    val target = UInt(32.W)
   }
 }
 
@@ -258,8 +261,11 @@ class RetireT extends Bundle {
   val store = UInt(2.W)
   val ldst_addr = UInt(32.W)
   val store_data = UInt(32.W)
+  val rd_load = Bool()
   val rd_sel = UInt(5.W)
   val rd_data = UInt(32.W)
+  val branch = Bool()
+  val target = UInt(32.W)
 }
 
 object isload {

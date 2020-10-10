@@ -18,6 +18,7 @@ INIT = testbench.text.mem testbench.data.mem
 .PHONY: clean
 
 include vivado.mk
+include vsim.mk
 
 clean:
 	$(RM) -rf Cpu.* *.mem *.dis *.log *.jou *.pb *.vcd *.wdb *.str xsim.dir .Xil

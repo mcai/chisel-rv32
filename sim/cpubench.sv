@@ -2,6 +2,8 @@
  * Copyright (c) 2015, 2016 C. Brett Witherspoon
  */
 
+//`define DEBUG
+
 module cpubench;
   // timeunit 1ns;
   // timeprecision 1ps;
@@ -66,7 +68,7 @@ module cpubench;
 
   soc x_dut( .* );
 
-  logic [8*256-1:0] line;
+  logic [8*1024-1:0] line;
   logic [7:0] ch;
   logic [3:0] tb_uart_rxst;
   integer cursor;
@@ -84,9 +86,10 @@ module cpubench;
       4'h9: begin
         tb_uart_rxst <= 4'h0;
         line[cursor*8+:8] <= ch;
+        line[(cursor-1)*8+:8] <= '0;
         cursor <= cursor-1;
         if (ch == 8'h0A) begin
-          $write("[%tns]UART: %s\n", $time, line);
+          $write("[%8tns] UART: %0s\n", $time, line);
           cursor <= 255;
           line <= '0;
         end
@@ -98,10 +101,17 @@ module cpubench;
     endcase
   end
 
+`ifdef DEBUG
   always @(posedge clk) begin: CPU_MONITOR
     if (x_dut.io_retire_valid) begin
-      $write("[%tns] pc:%h, ins:%h, ", $time, x_dut.io_retire_pc, x_dut.io_retire_inst);
-      if (|x_dut.io_retire_store)
+      $write("[%8tns] pc:%h, ins:%h, ", $time, x_dut.io_retire_pc, x_dut.io_retire_inst);
+      if (x_dut.io_retire_branch) begin
+        if (x_dut.io_retire_rd_load)
+          $write("x%d <- %h\n", x_dut.io_retire_rd_sel, x_dut.io_retire_rd_data);
+        else
+          $write("nothing\n");
+        $write(" pc <- %h\n", x_dut.io_retire_target);
+      end else if (|x_dut.io_retire_store)
         $write("[%h]%s <- %h\n",
             x_dut.io_retire_ldst_addr,
             x_dut.io_retire_store==2'h3 ? "w":x_dut.io_retire_store==2'h2 ? "h":"b",
@@ -112,9 +122,12 @@ module cpubench;
             x_dut.io_retire_rd_data,
             x_dut.io_retire_ldst_addr,
             x_dut.io_retire_load==2'h3 ? "w":x_dut.io_retire_load==2'h2 ? "h":"b");
-      else
+      else if (x_dut.io_retire_rd_load)
         $write("x%d <- %h\n", x_dut.io_retire_rd_sel, x_dut.io_retire_rd_data);
+      else
+        $write("nothing\n");
     end
   end
+`endif // DEBUG
 
 endmodule: cpubench

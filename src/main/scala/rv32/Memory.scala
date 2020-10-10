@@ -63,7 +63,7 @@ class Memory extends Module {
   when(write) { bready := true.B }
   .elsewhen(io.cache.b.valid & io.cache.b.ready) { bready := false.B }
 
-  val read = isload(mm.ctrl.op) & io.source.valid & io.source.ready
+  val read = isload(mm.ctrl.op) & io.source.fire()
   val reading = RegInit(false.B)
   when(reading) {
     when(io.cache.r.fire()) { reading := false.B }
@@ -73,9 +73,18 @@ class Memory extends Module {
   when(read) { arvalid := true.B }
   .elsewhen(io.cache.ar.fire()) { arvalid := false.B }
 
-  val araddr = RegEnable(mm.data.alu, read & ~(io.cache.ar.valid & ~io.cache.ar.ready))
-  val op     = RegEnable(mm.ctrl.op,  read & ~(io.cache.ar.valid & ~io.cache.ar.ready))
-  val rd     = RegEnable(mm.data.rd,  read & ~(io.cache.ar.valid & ~io.cache.ar.ready))
+  val araddr = RegInit(0.U(32.W))
+  val op     = RegInit(0.U(4.W))
+  val rd     = RegInit(0.U(5.W))
+  val pc     = RegInit(0.U(32.W))
+  val ir     = RegInit(0.U(32.W))
+  when (read & ~(io.cache.ar.valid & ~io.cache.ar.ready)) {
+    araddr := mm.data.alu
+    op := mm.ctrl.op
+    rd := mm.data.rd
+    pc := mm.data.pc
+    ir := mm.data.ir.inst
+  }
 
   io.cache.ar.bits.prot := Axi4.AXI4
   io.cache.ar.bits.addr := araddr
@@ -116,25 +125,34 @@ class Memory extends Module {
 
   io.source.ready := ~reading & ~writing & io.sink.ready
   val tvalid = RegInit(false.B)
-  when (~read & ((io.source.valid & io.source.ready) | (io.cache.r.valid & io.cache.r.ready &io.cache.r.bits.resp === 0.U(2.W)))) {
+  val rvokay = io.cache.r.fire() & io.cache.r.bits.resp === Axi4.OKAY
+  when (~read & (io.source.fire() | rvokay)) {
     tvalid := true.B
-  }.elsewhen (io.sink.valid & io.sink.ready) {
+  }.elsewhen (io.sink.fire()) {
     tvalid := false.B
   }
   io.sink.valid := tvalid
 
-  when (io.sink.ready) {
-    wb.ctrl.op := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.bits.resp === 0.U(2.W)), op, mm.ctrl.op)
-    wb.data.rd.data := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.bits.resp === 0.U(2.W)), rdata, mm.data.alu)
-    wb.data.rd.addr := Mux((io.cache.r.valid & io.cache.r.ready & io.cache.r.bits.resp === 0.U(2.W)), rd, mm.data.rd)
+  when (io.sink.ready & rvokay) {
+    wb.ctrl.op := op
+    wb.data.rd.data := rdata
+    wb.data.rd.addr := rd
+    wb.debug.pc := pc
+    wb.debug.ir.inst := ir
+  }.elsewhen (io.sink.ready & io.source.valid) {
+    wb.ctrl.op := mm.ctrl.op
+    wb.data.rd.data := mm.data.alu
+    wb.data.rd.addr := mm.data.rd
     wb.debug.pc := mm.data.pc
-    wb.debug.ir := mm.data.ir
+    wb.debug.ir.inst := mm.data.ir.inst
     wb.debug.alu := mm.data.alu
     wb.debug.wdata := Mux1H(Seq(
-      (mm.ctrl.op === op_t.STORE_WORD) -> cwdata,
-      (mm.ctrl.op === op_t.STORE_HALF) -> Cat(0.U(16.W), cwdata(15, 0)),
-      (mm.ctrl.op === op_t.STORE_WORD) -> Cat(0.U(24.W), cwdata(7, 0))
+      (mm.ctrl.op === op_t.STORE_WORD) -> mm.data.rs2,
+      (mm.ctrl.op === op_t.STORE_HALF) -> Cat(0.U(16.W), mm.data.rs2(15, 0)),
+      (mm.ctrl.op === op_t.STORE_BYTE) -> Cat(0.U(24.W), mm.data.rs2(7, 0))
     ))
+    wb.debug.br := mm.ctrl.br
+    wb.debug.target := mm.ctrl.target
   }
 
 }

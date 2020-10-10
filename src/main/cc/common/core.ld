@@ -12,7 +12,7 @@ SECTIONS
         *(.loader)
     }
 
-    . = 0x00000400;
+    . = 0x00000100;
     _ftext = .;
 
     .text :
@@ -39,8 +39,14 @@ SECTIONS
 
     .data :
     {
+        *(.rodata)
+        *(.rodata.*)
+        *(.srodata)
+        *(.eh_frame)
         *(.data)
         *(.data.*)
+        *(.sdata)
+        *(.init_array.00000)
     }
 
     . = ALIGN(4);

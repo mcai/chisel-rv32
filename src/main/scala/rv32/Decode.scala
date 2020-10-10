@@ -18,6 +18,7 @@ object DecCtrl {
 class Decode extends Module {
   val io = IO(new Bundle {
     val lock = Input(Bool())
+    val branch = Input(Bool())
     val rs1_sel = Input(UInt(2.W))
     val rs2_sel = Input(UInt(2.W))
     val alu_data = Input(UInt(32.W))
@@ -30,6 +31,7 @@ class Decode extends Module {
     val invalid = Output(Bool())
     val source = Flipped(Irrevocable(new IdT))
     val sink = Irrevocable(new ExT)
+    //val ctrl = Output(new CtrlT)
   })
   val NONE  = DecCtrl(op_t.NONE,                fn_t.ANY,   br_t.NA,   op1_t.XX,  op2_t.XXX)
   val ADDI  = DecCtrl(op_t.INTEGER,             fn_t.ADD,   br_t.NA,   op1_t.RS1, op2_t.I_IMM)
@@ -184,11 +186,13 @@ class Decode extends Module {
   }
 
   val tvalid = RegInit(false.B)
-  when(io.source.valid & io.source.ready) {tvalid := true.B}
-  .elsewhen(io.sink.valid & io.sink.ready) {tvalid := false.B}
+  when(io.branch) {tvalid := false.B}
+  .elsewhen(io.source.fire()) {tvalid := true.B}
+  .elsewhen(io.sink.fire()) {tvalid := false.B}
 
   io.sink.valid := tvalid
   io.source.ready := io.sink.ready & ~io.lock
   io.invalid := ctrl.op === op_t.NONE & io.source.valid
+  //io.ctrl := ctrl
 }
 

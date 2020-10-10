@@ -59,7 +59,7 @@ for (s=0; s<SLV_NUM; s=s+1) begin: SLV
   assign apb[s].paddr = st_r[_WRITE_] ? axi.awaddr[SLV_ADRW-1:0]:axi.araddr[SLV_ADRW-1:0];
   assign apb[s].pwrite = st_r[_WRITE_];
   assign apb[s].pwdata = axi.wdata;
-  assign apb[s].pslverr = '0;
+  //assign apb[s].pslverr = '0;
 
   assign psel[s] = apb[s].psel;
   assign pready[s] = apb[s].pready;

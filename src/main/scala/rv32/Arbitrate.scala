@@ -72,28 +72,33 @@ class Arbitrate extends Module {
   io.mmio.b.ready := wmmio & io.cache.b.ready
 
   // AR channel
-  io.code.ar.bits := io.cache.ar.bits
-  io.code.ar.valid := (write === CODE) & io.cache.ar.valid
+  io.code.ar.bits.addr := 0.U
+  io.code.ar.bits.prot := Axi4.AXI4
+  io.code.ar.valid := false.B
 
   io.data.ar.bits := io.cache.ar.bits
-  io.data.ar.valid := (write === DATA) & io.cache.ar.valid
+  io.data.ar.valid := (read === DATA) & io.cache.ar.valid
 
   io.mmio.ar.bits := io.cache.ar.bits
-  io.mmio.ar.valid := (write === MMIO) & io.cache.ar.valid
+  io.mmio.ar.valid := (read === MMIO) & io.cache.ar.valid
 
-  io.cache.ar.ready := wcode & io.code.ar.ready | wdata & io.data.ar.ready | wmmio & io.mmio.ar.ready
+  io.cache.ar.ready := rdata & io.data.ar.ready | rmmio & io.mmio.ar.ready
 
   // R channel
   io.cache.r.bits.resp := Axi4.DECERR
   io.cache.r.bits.data := 0.U
-  when (wcode)      { io.cache.r.bits := io.code.r.bits }
-  .elsewhen (wdata)  { io.cache.r.bits := io.data.r.bits }
-  .elsewhen (wmmio)  { io.cache.r.bits := io.mmio.r.bits }
+  io.cache.r.valid := true.B
+  when (rdata) {
+    io.cache.r.bits := io.data.r.bits
+    io.cache.r.valid := io.data.r.valid
+  }.elsewhen (rmmio) {
+    io.cache.r.bits := io.mmio.r.bits
+    io.cache.r.valid := io.mmio.r.valid
+  }
 
-  io.cache.r.valid := wcode & io.code.r.valid | wdata & io.data.r.valid | wmmio & io.mmio.r.valid
-  io.code.r.ready := wcode & io.cache.r.ready
-  io.data.r.ready := wdata & io.cache.r.ready
-  io.mmio.r.ready := wmmio & io.cache.r.ready
+  io.code.r.ready := false.B
+  io.data.r.ready := rdata & io.cache.r.ready
+  io.mmio.r.ready := rmmio & io.cache.r.ready
 
   io.fault := io.cache.ar.valid & (read === NONE);
 }

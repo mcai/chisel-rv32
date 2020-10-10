@@ -276,13 +276,13 @@ module apb_uart
                 RBR: // either RBR or DLL
                 begin
                     if (regs_q[LCR][7]) // Divisor Latch Access Bit (DLAB)
-                        PRDATA = {24'b0, regs_q[DLL + 'd8]};
+                        PRDATA = {4{regs_q[DLL + 'd8]}};
                     else
                     begin
 
                         fifo_rx_ready = 1'b1;
 
-                        PRDATA = {24'b0, fifo_rx_data[7:0]};
+                        PRDATA = {4{fifo_rx_data[7:0]}};
 
                         clr_int = 4'b1000; // clear Received Data Available interrupt
                     end
@@ -290,28 +290,28 @@ module apb_uart
 
                 LSR: // Line Status Register
                 begin
-                    PRDATA = {24'b0, regs_q[LSR]};
+                    PRDATA = {4{regs_q[LSR]}};
                     clr_int = 4'b1100; // clear parrity interrupt error
                 end
 
                 LCR: // Line Control Register
-                    PRDATA = {24'b0, regs_q[LCR]};
+                    PRDATA = {4{regs_q[LCR]}};
 
                 IER: // either IER or DLM
                 begin
                     if (regs_q[LCR][7]) // Divisor Latch Access Bit (DLAB)
-                        PRDATA = {24'b0, regs_q[DLM + 'd8]};
+                        PRDATA = {4{regs_q[DLM + 'd8]}};
                     else
-                        PRDATA = {24'b0, regs_q[IER]};
+                        PRDATA = {4{regs_q[IER]}};
                 end
 
                 IIR: // interrupt identification register read only
                 begin
-                    PRDATA = {24'b0, 1'b1, 1'b1, 2'b0, IIR_o};
+                    PRDATA = {4{1'b1, 1'b1, 2'b0, IIR_o}};
                     clr_int = 4'b0100; // clear Transmitter Holding Register Empty
                 end
 
-                SCR: PRDATA = {24'h0, regs_q[SCR]};
+                SCR: PRDATA = {4{regs_q[SCR]}};
 
                 default: ;
             endcase
