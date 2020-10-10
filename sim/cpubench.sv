@@ -10,9 +10,9 @@ module cpubench;
   wire [7:0] gpio_i, gpio_o;
   logic uart_tx, uart_rx;
 
-  // Clock (100 MHz)
+  // Clock (50 MHz)
   bit clk = 0;
-  always #5ns clk <= ~clk;
+  always #10ns clk <= ~clk;
 
   // Reset
   bit rst_n;
@@ -23,6 +23,7 @@ module cpubench;
   endtask : reset
 
   task dump();
+`ifdef DEBUG
     $write("\nRegisters:\n\n");
     for (int i = 0; i < 32; i+=4) begin : dump_registers
       $write("%2d: %08h %08h %08h %08h\n", i,
@@ -33,6 +34,7 @@ module cpubench;
       );
     end : dump_registers
     $write("\n");
+`endif
   endtask
 
   task tb_uart_rx;

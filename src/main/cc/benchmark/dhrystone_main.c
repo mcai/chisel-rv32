@@ -12,8 +12,19 @@
 #include "dhrystone.h"
 
 void debug_printf(const char* str, ...);
+//#define debug_printf printf
 
-#include "util.h"
+#define SIMULATION
+
+#ifdef SIMULATION
+#define SYS_FREQ  0
+#define BAUD_RATE 1
+#else
+#define SYS_FREQ  50000000
+#define BAUD_RATE 115200
+#endif
+
+//#include "util.h"
 
 #include <alloca.h>
 
@@ -68,6 +79,8 @@ int main (int argc, char** argv)
   REG   int             Run_Index;
   REG   int             Number_Of_Runs;
 
+  uart_init(SYS_FREQ, BAUD_RATE, 0x3);
+
   /* Arguments */
   Number_Of_Runs = NUMBER_OF_RUNS;
 
@@ -80,7 +93,7 @@ int main (int argc, char** argv)
   Ptr_Glob->Discr                       = Ident_1;
   Ptr_Glob->variant.var_1.Enum_Comp     = Ident_3;
   Ptr_Glob->variant.var_1.Int_Comp      = 40;
-  strcpy (Ptr_Glob->variant.var_1.Str_Comp, 
+  strcpy (Ptr_Glob->variant.var_1.Str_Comp,
           "DHRYSTONE PROGRAM, SOME STRING");
   strcpy (Str_1_Loc, "DHRYSTONE PROGRAM, 1'ST STRING");
 
@@ -235,6 +248,7 @@ int main (int argc, char** argv)
   printf("Microseconds for one run through Dhrystone: %ld\n", Microseconds);
   printf("Dhrystones per Second:                      %ld\n", Dhrystones_Per_Second);
 
+  stop_simulation();
   return 0;
 }
 
@@ -245,27 +259,27 @@ Proc_1 (Ptr_Val_Par)
 REG Rec_Pointer Ptr_Val_Par;
     /* executed once */
 {
-  REG Rec_Pointer Next_Record = Ptr_Val_Par->Ptr_Comp;  
+  REG Rec_Pointer Next_Record = Ptr_Val_Par->Ptr_Comp;
                                         /* == Ptr_Glob_Next */
   /* Local variable, initialized with Ptr_Val_Par->Ptr_Comp,    */
   /* corresponds to "rename" in Ada, "with" in Pascal           */
-  
-  structassign (*Ptr_Val_Par->Ptr_Comp, *Ptr_Glob); 
+
+  structassign (*Ptr_Val_Par->Ptr_Comp, *Ptr_Glob);
   Ptr_Val_Par->variant.var_1.Int_Comp = 5;
-  Next_Record->variant.var_1.Int_Comp 
+  Next_Record->variant.var_1.Int_Comp
         = Ptr_Val_Par->variant.var_1.Int_Comp;
   Next_Record->Ptr_Comp = Ptr_Val_Par->Ptr_Comp;
   Proc_3 (&Next_Record->Ptr_Comp);
-    /* Ptr_Val_Par->Ptr_Comp->Ptr_Comp 
+    /* Ptr_Val_Par->Ptr_Comp->Ptr_Comp
                         == Ptr_Glob->Ptr_Comp */
   if (Next_Record->Discr == Ident_1)
     /* then, executed */
   {
     Next_Record->variant.var_1.Int_Comp = 6;
-    Proc_6 (Ptr_Val_Par->variant.var_1.Enum_Comp, 
+    Proc_6 (Ptr_Val_Par->variant.var_1.Enum_Comp,
            &Next_Record->variant.var_1.Enum_Comp);
     Next_Record->Ptr_Comp = Ptr_Glob->Ptr_Comp;
-    Proc_7 (Next_Record->variant.var_1.Int_Comp, 10, 
+    Proc_7 (Next_Record->variant.var_1.Int_Comp, 10,
            &Next_Record->variant.var_1.Int_Comp);
   }
   else /* not executed */
@@ -280,7 +294,7 @@ Proc_2 (Int_Par_Ref)
 
 One_Fifty   *Int_Par_Ref;
 {
-  One_Fifty  Int_Loc;  
+  One_Fifty  Int_Loc;
   Enumeration   Enum_Loc;
 
   Int_Loc = *Int_Par_Ref + 10;

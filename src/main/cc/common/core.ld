@@ -42,11 +42,11 @@ SECTIONS
         *(.rodata)
         *(.rodata.*)
         *(.srodata)
+        *(.srodata.*)
         *(.eh_frame)
         *(.data)
         *(.data.*)
         *(.sdata)
-        *(.init_array.00000)
     }
 
     . = ALIGN(4);
@@ -60,6 +60,8 @@ SECTIONS
     {
         *(.bss)
         *(.bss.*)
+        *(.sbss)
+        *(.sbss.*)
     }
 
     PROVIDE(end = .);

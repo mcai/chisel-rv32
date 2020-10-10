@@ -373,3 +373,6 @@ long atol(const char* str) {
 
   return sign ? -res : res;
 }
+
+void setStats(int n) {
+}

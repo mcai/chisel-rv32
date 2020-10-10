@@ -55,12 +55,14 @@ static inline uint32_t timer_get(int t) {
   return (uint32_t)RD32(TIMER_REG(t,VALUE));
 }
 
-static inline void timer_start(int t) {
+static inline uint32_t timer_start(int t) {
   WR32(TIMER_REG(t,CONTROL), 1);
+  return RD32(TIMER_REG(t,VALUE));
 }
 
-static inline void timer_stop(int t) {
+static inline uint32_t timer_stop(int t) {
   WR32(TIMER_REG(t,CONTROL), 0);
+  return RD32(TIMER_REG(t,VALUE));
 }
 
 static inline void stop_simulation() {
@@ -82,5 +84,7 @@ size_t strnlen(const char *s, size_t n);
 int strcmp(const char* s1, const char* s2);
 char* strcpy(char* dest, const char* src);
 long atol(const char* str);
+
+void setStats(int);
 
 #endif // _BSP_H

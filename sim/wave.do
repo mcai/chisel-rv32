@@ -1,19 +1,27 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -group soc "/cpubench/x_dut/*"
-#add wave -group fetch     "/cpubench/x_dut/x_cpu/x_fetch/io_*"
-#add wave -group decode    "/cpubench/x_dut/x_cpu/x_decode/io_*"
-#add wave -group execute   "/cpubench/x_dut/x_cpu/x_execute/io_*"
-#add wave -group memory    "/cpubench/x_dut/x_cpu/x_memory/io_*"
-#add wave -group writeback "/cpubench/x_dut/x_cpu/x_writeback/io_*"
-#add wave -group hazard    "/cpubench/x_dut/x_cpu/x_hazard/io_*"
-#add wave -group forward   "/cpubench/x_dut/x_cpu/x_forward/io_*"
-#add wave -group regfile   "/cpubench/x_dut/x_cpu/x_regfile/io_*"
-#add wave -group uart -port "/cpubench/x_dut/x_uart/*"
+add wave -noupdate -expand -group soc /cpubench/x_dut/clk
+add wave -noupdate -expand -group soc /cpubench/x_dut/rst_n
+add wave -noupdate -expand -group soc /cpubench/x_dut/gpio_o
+add wave -noupdate -expand -group soc /cpubench/x_dut/uart_tx
+add wave -noupdate -expand -group soc /cpubench/x_dut/uart_rx
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_valid
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_pc
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_inst
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_load
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_store
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_ldst_addr
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_store_data
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_rd_load
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_rd_sel
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_rd_data
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_branch
+add wave -noupdate -expand -group soc /cpubench/x_dut/io_retire_target
+add wave -noupdate {/cpubench/x_dut/x_timer/TIMER_GEN[0]/timer_i/regs_q[0]}
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {0 ns} 0}
-quietly wave cursor active 0
-configure wave -namecolwidth 150
+WaveRestoreCursors {{Cursor 1} {199425 ns} 0} {{Cursor 2} {168264 ns} 0}
+quietly wave cursor active 2
+configure wave -namecolwidth 344
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
 configure wave -signalnamewidth 1
@@ -27,4 +35,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {1 us}
+WaveRestoreZoom {0 ns} {3744851 ns}
