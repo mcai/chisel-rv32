@@ -245,8 +245,8 @@ int main (int argc, char** argv)
   Microseconds = ((User_Time / Number_Of_Runs) * Mic_secs_Per_Second) / HZ;
   Dhrystones_Per_Second = (HZ * Number_Of_Runs) / User_Time;
 
-  printf("Microseconds for one run through Dhrystone: %ld\n", Microseconds);
-  printf("Dhrystones per Second:                      %ld\n", Dhrystones_Per_Second);
+  printf("UART: Microseconds for one run through Dhrystone: %ld\n", Microseconds);
+  printf("UART: Dhrystones per Second:                      %ld\n", Dhrystones_Per_Second);
 
   stop_simulation();
   return 0;
