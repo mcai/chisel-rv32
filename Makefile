@@ -1,4 +1,4 @@
-DIRS = src/main/cc sim
+DIRS = src/main/cc/benchmark sim
 
 all: sim/Cpu.v test
 
