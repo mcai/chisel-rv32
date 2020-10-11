@@ -4,7 +4,7 @@ module soc #(
 ) (
   input wire clk
   ,input wire rst_n
-  ,output wire [7:0] gpio_o
+  ,output wire [3:0] gpio_o
   ,output wire uart_tx
   ,input wire uart_rx
 );

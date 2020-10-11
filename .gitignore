@@ -340,6 +340,7 @@ hs_err_pid*
 
 project/
 sim/webtalk*
+sim/*.log
 sim/*.jou
 sim/*.pb
 sim/*.wdb
@@ -354,3 +355,10 @@ sim/transcript
 sim/vsim.wlf
 sim/rv32.cr.mti
 sim/*.dis
+sim/*.rpt
+sim/*.rpx
+sim/*.dcp
+sim/*.begin.rst
+sim/*.end.rst
+sim/*.error.rst
+sim/*.bit

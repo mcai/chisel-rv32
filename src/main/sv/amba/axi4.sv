@@ -9,7 +9,7 @@
  *
  * A package for ARM AMBA AXI4 definitions.
  */
-`default_nettype none
+//`default_nettype none
 
 package axi4;
 

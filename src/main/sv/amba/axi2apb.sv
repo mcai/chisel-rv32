@@ -43,6 +43,7 @@ always_comb begin
     BRESP: if (axi.bready) st_c[4:0] = IDLE;
     READ: st_c[4:0] = RDATA;
     RDATA: if (axi.rready) st_c[4:0] = IDLE;
+    default: st_c[4:0] = IDLE;
   endcase
 end
 
