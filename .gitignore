@@ -48,7 +48,7 @@ test_run_dir/*
 # project-wide generated files
 *.gise
 par_usage_statistics.html
-usage_statistics_webtalk.html
+usage_statistics_webtalk.*
 webtalk.log
 webtalk_pn.xml
 
