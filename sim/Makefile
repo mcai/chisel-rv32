@@ -23,13 +23,16 @@ RTL = $(PROJ)/src/main/sv/amba/axi4.sv \
 
 INIT = testbench.text.mem testbench.data.mem
 
-%.mem:
+$(INIT):
 	make -C $(PROJ)/src/main/cc/benchmark
+
+Cpu.v: $(PROJ)/src/main/scala/rv32/*.scala
+	make -C $(PROJ) sim/$@
 
 .PHONY: clean
 
 include vivado.mk
 
 clean:
-	$(RM) -rf Cpu.* *.mem *.dis *.log *.jou *.pb *.vcd *.wdb *.str xsim.dir .Xil
+	$(RM) -rf Cpu.* *.mem *.dis *.log *.jou *.pb *.vcd *.wdb *.str *.dcp *.rpt *.rpx xsim.dir .Xil
 

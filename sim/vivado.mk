@@ -63,12 +63,9 @@ $(LIBDIR)/@cpu.sdb: $(GEN)
 $(LIBDIR)/%.sdb: %.sv
 	xvlog -nolog --sv --work $(LIB) -L $(LIB) $<
 
-Cpu.v: $(PROJ)/src/main/scala/rv32/*.scala
-	make -C $(PROJ) sim/$@
-
 soc.bit: soc.dcp
 	vivado -log impl.log -jou impl.jou -mode batch -source $(PROJ)/fpga/impl.tcl
 
-soc.dcp: $(RTL) $(GEN) $(INIT)
+soc.dcp: $(RTL) $(INIT) Cpu.v
 	vivado -log syn.log -jou syn.jou -mode batch -source $(PROJ)/fpga/syn.tcl
 

@@ -64,7 +64,7 @@ foreach dcp [get_files -quiet -all -filter file_type=="Design\ Checkpoint"] {
   set_property used_in_implementation false $dcp
 }
 read_xdc ../fpga/board.xdc
-#set_property used_in_implementation false [get_files ../fpga/board.xdc]
+set_property used_in_implementation true [get_files ../fpga/board.xdc]
 
 set_param ips.enableIPCacheLiteLoad 1
 
