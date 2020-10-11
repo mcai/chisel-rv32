@@ -32,3 +32,9 @@ Modify setup.sh with whatever editor you like
 
 `$ make test`
 
+# Generate Bitstream for FPGA programming
+
+In $PROJ/sim
+
+`$ make soc.bit`
+

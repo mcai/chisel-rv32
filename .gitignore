@@ -362,3 +362,4 @@ sim/*.begin.rst
 sim/*.end.rst
 sim/*.error.rst
 sim/*.bit
+sim/usage_statistics_webtalk.xml
