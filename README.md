@@ -19,7 +19,7 @@ Refer to https://www.sifive.com/software
 
 # Get chisel-rv32
 
-`$ git clone https://github.com/ljiaxi/chisel-rv32.git`
+`$ git clone https://github.com/mcai/chisel-rv32`
 
 # Modify TOOLs path in setup.sh
 
