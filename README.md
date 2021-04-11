@@ -1,7 +1,7 @@
 # 课设：
 Design RISCV instructions for matrix addition, Implement Matrix addition in chisel, fast as possible
 
-1.	跑通chisel模拟器 30 points
+1.	跑通chisel->vivado模拟器 30 points
 2.	设计实现矩阵加法40 points
 3.	分析优化矩阵加法性能 30 points
 
