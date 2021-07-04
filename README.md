@@ -1,4 +1,4 @@
-# 课程设计内容：
+# 课程设计内容
 
 ## 整体目标
 
@@ -6,13 +6,16 @@
 
 ## 问题背景
 
-数学中，矩阵乘法（英语：matrix multiplication）是一种根据两个矩阵得到第三个矩阵的二元运算，第三个矩阵即前两者的乘积，称为矩阵积（英语：matrix product）。设{\displaystyle A}A是{\displaystyle n\times m}{\displaystyle n\times m}的矩阵，{\displaystyle B}B是{\displaystyle m\times p}m\times p的矩阵，则它们的矩阵积{\displaystyle AB}AB是{\displaystyle n\times p}n\times p的矩阵。{\displaystyle A}A中每一行的{\displaystyle m}m个元素都与{\displaystyle B}B中对应列的{\displaystyle m}m个元素对应相乘，这些乘积的和就是{\displaystyle AB}AB中的一个元素。
+数学中，矩阵乘法（英语：matrix multiplication）是一种根据两个矩阵得到第三个矩阵的二元运算，第三个矩阵即前两者的乘积，称为矩阵积（英语：matrix product）。设A是n x m的矩阵，B是m x p的矩阵，则它们的矩阵积 AB 是 n x p 的矩阵。A中每一行的 m 个元素都与 B 中对应列的 m 个元素对应相乘，这些乘积的和就是 AB 中的一个元素。
 
 ## 具体要求
 
 1.	用C语言编写两个 32 x 32 大小随机矩阵乘法程序，并在vivado模拟器上跑通该程序。 (20分)
+
 2.	设计、实现、跑通矩阵乘法，并计算矩阵乘法需要的时钟周期数。（20分）
+
 3.	采用流水线技术优化矩阵乘法性能，并计算加速比 = 改进前的时钟周期数 / 改进后的时钟周期数。（20分）
+
 4.	采用分块技术优化矩阵乘法性能，支持 512 x 512 大小的矩阵乘法运算。（20分）
 
 # 课程设计指导书
